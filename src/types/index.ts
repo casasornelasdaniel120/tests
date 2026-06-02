@@ -41,7 +41,7 @@ export interface SaleWithDetails {
   total: number;
   notes: string | null;
   user: { id: string; name: string };
-  client: { id: string; name: string } | null;
+  client: { id: string; name: string; phone: string | null; email: string | null } | null;
   items: {
     id: string;
     quantity: number;

@@ -22,7 +22,7 @@ export async function GET(req: Request) {
     },
     include: {
       user: { select: { id: true, name: true } },
-      client: { select: { id: true, name: true } },
+      client: { select: { id: true, name: true, phone: true, email: true } },
       items: { include: { product: { select: { id: true, name: true, image: true } } } },
       payments: true,
     },
@@ -66,7 +66,7 @@ export async function POST(req: Request) {
     },
     include: {
       user: { select: { id: true, name: true } },
-      client: { select: { id: true, name: true } },
+      client: { select: { id: true, name: true, phone: true, email: true } },
       items: { include: { product: true } },
       payments: true,
     },

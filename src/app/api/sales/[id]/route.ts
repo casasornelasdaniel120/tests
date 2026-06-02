@@ -14,7 +14,7 @@ export async function GET(
     where: { id },
     include: {
       user: { select: { id: true, name: true } },
-      client: { select: { id: true, name: true } },
+      client: { select: { id: true, name: true, phone: true, email: true } },
       items: { include: { product: true } },
       payments: true,
     },
