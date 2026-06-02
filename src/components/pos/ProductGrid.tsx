@@ -1,0 +1,103 @@
+"use client";
+
+import Image from "next/image";
+import { Search, Plus } from "lucide-react";
+import { Input } from "@/components/ui/Input";
+import { formatCurrency } from "@/lib/utils";
+
+interface Product {
+  id: string;
+  name: string;
+  description: string | null;
+  price: number;
+  image: string | null;
+  category: string;
+}
+
+interface ProductGridProps {
+  products: Product[];
+  search: string;
+  onSearch: (v: string) => void;
+  onAdd: (product: Product) => void;
+}
+
+const CATEGORY_COLORS: Record<string, string> = {
+  Retrato: "bg-rose/10 text-rose",
+  Corporativo: "bg-blue-500/10 text-blue-400",
+  Quinceañera: "bg-gold/10 text-gold",
+  Familia: "bg-emerald-500/10 text-emerald-400",
+  "Bebé": "bg-purple-500/10 text-purple-400",
+};
+
+export function ProductGrid({ products, search, onSearch, onAdd }: ProductGridProps) {
+  return (
+    <div className="flex flex-col h-full">
+      <div className="px-6 py-4 border-b border-border">
+        <Input
+          placeholder="Buscar paquete o categoría…"
+          value={search}
+          onChange={(e) => onSearch(e.target.value)}
+          leftIcon={<Search size={16} />}
+        />
+      </div>
+
+      <div className="flex-1 overflow-y-auto p-6">
+        {products.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-text-secondary">
+            <p>No hay productos disponibles</p>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+            {products.map((product) => (
+              <button
+                key={product.id}
+                onClick={() => onAdd(product)}
+                className="group relative bg-bg-surface border border-border rounded-2xl overflow-hidden text-left hover:border-gold/40 transition-all hover:shadow-lg hover:shadow-gold/5"
+              >
+                <div className="aspect-video bg-bg-elevated relative overflow-hidden">
+                  {product.image ? (
+                    <Image
+                      src={product.image}
+                      alt={product.name}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <div className="w-full h-full flex items-center justify-center text-text-secondary/30 text-4xl font-light">
+                      {product.name[0]}
+                    </div>
+                  )}
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-gold/90 flex items-center justify-center opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all">
+                      <Plus size={20} className="text-bg-base" />
+                    </div>
+                  </div>
+                </div>
+                <div className="p-4">
+                  <span
+                    className={`text-xs px-2 py-0.5 rounded-full font-medium ${
+                      CATEGORY_COLORS[product.category] ?? "bg-bg-elevated text-text-secondary"
+                    }`}
+                  >
+                    {product.category}
+                  </span>
+                  <p className="text-sm font-semibold text-text-primary mt-2 leading-tight">
+                    {product.name}
+                  </p>
+                  {product.description && (
+                    <p className="text-xs text-text-secondary mt-1 line-clamp-2">
+                      {product.description}
+                    </p>
+                  )}
+                  <p className="text-base font-bold text-gold mt-3">
+                    {formatCurrency(product.price)}
+                  </p>
+                </div>
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
