@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -10,20 +10,15 @@ export async function GET(req: Request) {
   const activeOnly = searchParams.get("active") === "true";
   const search = searchParams.get("search") ?? "";
 
-  const products = await prisma.product.findMany({
-    where: {
-      ...(activeOnly && { active: true }),
-      ...(search && {
-        OR: [
-          { name: { contains: search, mode: "insensitive" } },
-          { category: { contains: search, mode: "insensitive" } },
-        ],
-      }),
-    },
-    orderBy: { name: "asc" },
-  });
+  const supabase = getSupabaseAdmin();
+  let query = supabase.from("Product").select("*").order("name");
 
-  return NextResponse.json(products);
+  if (activeOnly) query = query.eq("active", true);
+  if (search) query = query.or(`name.ilike.%${search}%,category.ilike.%${search}%`);
+
+  const { data, error } = await query;
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
 }
 
 export async function POST(req: Request) {
@@ -32,15 +27,9 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
-  const body = await req.json() as {
-    name: string;
-    description?: string;
-    price: number;
-    image?: string;
-    category: string;
-    active?: boolean;
-  };
-
-  const product = await prisma.product.create({ data: body });
-  return NextResponse.json(product, { status: 201 });
+  const body = await req.json();
+  const supabase = getSupabaseAdmin();
+  const { data, error } = await supabase.from("Product").insert(body).select().single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data, { status: 201 });
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { createId } from "@paralleldrive/cuid2";
 import type { CreateSalePayload } from "@/types";
 
 export async function GET(req: Request) {
@@ -13,21 +14,25 @@ export async function GET(req: Request) {
   const userId = searchParams.get("userId");
   const method = searchParams.get("method");
 
-  const sales = await prisma.sale.findMany({
-    where: {
-      ...(from && { createdAt: { gte: new Date(from) } }),
-      ...(to && { createdAt: { lte: new Date(to) } }),
-      ...(userId && { userId }),
-      ...(method && { payments: { some: { method: method as "EFECTIVO" | "TARJETA" | "TRANSFERENCIA" } } }),
-    },
-    include: {
-      user: { select: { id: true, name: true } },
-      client: { select: { id: true, name: true, phone: true, email: true } },
-      items: { include: { product: { select: { id: true, name: true, image: true } } } },
-      payments: true,
-    },
-    orderBy: { createdAt: "desc" },
-  });
+  const supabase = getSupabaseAdmin();
+  let query = supabase
+    .from("Sale")
+    .select(`*, user:User(id,name), client:Client(id,name,phone,email), items:SaleItem(*,product:Product(id,name,image)), payments:SalePayment(*)`)
+    .order("createdAt", { ascending: false });
+
+  if (from) query = query.gte("createdAt", from);
+  if (to) query = query.lte("createdAt", to);
+  if (userId) query = query.eq("userId", userId);
+
+  const { data, error } = await query;
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+
+  let sales = data ?? [];
+  if (method) {
+    sales = sales.filter((s) =>
+      (s.payments as { method: string }[]).some((p) => p.method === method)
+    );
+  }
 
   return NextResponse.json(sales);
 }
@@ -39,38 +44,53 @@ export async function POST(req: Request) {
   }
 
   const body = await req.json() as CreateSalePayload;
+  const supabase = getSupabaseAdmin();
+  const saleId = createId();
 
-  const sale = await prisma.sale.create({
-    data: {
-      userId: session.user.id,
-      clientId: body.clientId,
-      subtotal: body.subtotal,
-      discount: body.discount,
-      total: body.total,
-      notes: body.notes,
-      items: {
-        create: body.items.map((item) => ({
-          productId: item.productId,
-          quantity: item.quantity,
-          unitPrice: item.unitPrice,
-          discount: item.discount,
-          subtotal: item.subtotal,
-        })),
-      },
-      payments: {
-        create: body.payments.map((p) => ({
-          method: p.method,
-          amount: p.amount,
-        })),
-      },
-    },
-    include: {
-      user: { select: { id: true, name: true } },
-      client: { select: { id: true, name: true, phone: true, email: true } },
-      items: { include: { product: true } },
-      payments: true,
-    },
+  // Insert sale
+  const { error: saleError } = await supabase.from("Sale").insert({
+    id: saleId,
+    userId: session.user.id,
+    clientId: body.clientId ?? null,
+    subtotal: body.subtotal,
+    discount: body.discount,
+    total: body.total,
+    notes: body.notes ?? null,
   });
+  if (saleError) return NextResponse.json({ error: saleError.message }, { status: 500 });
+
+  // Insert items and payments in parallel
+  const [itemsRes, paymentsRes] = await Promise.all([
+    supabase.from("SaleItem").insert(
+      body.items.map((item) => ({
+        id: createId(),
+        saleId,
+        productId: item.productId,
+        quantity: item.quantity,
+        unitPrice: item.unitPrice,
+        discount: item.discount,
+        subtotal: item.subtotal,
+      }))
+    ),
+    supabase.from("SalePayment").insert(
+      body.payments.map((p) => ({
+        id: createId(),
+        saleId,
+        method: p.method,
+        amount: p.amount,
+      }))
+    ),
+  ]);
+
+  if (itemsRes.error) return NextResponse.json({ error: itemsRes.error.message }, { status: 500 });
+  if (paymentsRes.error) return NextResponse.json({ error: paymentsRes.error.message }, { status: 500 });
+
+  // Return full sale with relations
+  const { data: sale } = await supabase
+    .from("Sale")
+    .select(`*, user:User(id,name), client:Client(id,name,phone,email), items:SaleItem(*,product:Product(id,name,image)), payments:SalePayment(*)`)
+    .eq("id", saleId)
+    .single();
 
   return NextResponse.json(sale, { status: 201 });
 }

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -9,33 +9,21 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const search = searchParams.get("search") ?? "";
 
-  const clients = await prisma.client.findMany({
-    where: search
-      ? {
-          OR: [
-            { name: { contains: search, mode: "insensitive" } },
-            { email: { contains: search, mode: "insensitive" } },
-            { phone: { contains: search, mode: "insensitive" } },
-          ],
-        }
-      : undefined,
-    orderBy: { name: "asc" },
-  });
+  const supabase = getSupabaseAdmin();
+  let query = supabase.from("Client").select("*").order("name");
+  if (search) query = query.or(`name.ilike.%${search}%,email.ilike.%${search}%,phone.ilike.%${search}%`);
 
-  return NextResponse.json(clients);
+  const { data, error } = await query;
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
 }
 
 export async function POST(req: Request) {
   const session = await auth();
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
-  const body = await req.json() as {
-    name: string;
-    phone?: string;
-    email?: string;
-    notes?: string;
-  };
-
-  const client = await prisma.client.create({ data: body });
-  return NextResponse.json(client, { status: 201 });
+  const body = await req.json();
+  const { data, error } = await getSupabaseAdmin().from("Client").insert(body).select().single();
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data, { status: 201 });
 }

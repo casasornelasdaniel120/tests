@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import type { PaymentMethod } from "@prisma/client";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -12,62 +11,61 @@ export async function GET(req: Request) {
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date") ?? new Date().toISOString().split("T")[0];
   const userId = searchParams.get("userId") ?? undefined;
-  const method = searchParams.get("method") as PaymentMethod | null;
+  const method = searchParams.get("method") ?? undefined;
 
-  const start = new Date(`${date}T00:00:00`);
-  const end = new Date(`${date}T23:59:59`);
+  const start = `${date}T00:00:00`;
+  const end = `${date}T23:59:59`;
+  const supabase = getSupabaseAdmin();
 
-  const dateFilter = { createdAt: { gte: start, lte: end } };
+  // Fetch sales with relations
+  let salesQuery = supabase
+    .from("Sale")
+    .select(`*, user:User(id,name), client:Client(id,name), items:SaleItem(*,product:Product(id,name)), payments:SalePayment(*)`)
+    .gte("createdAt", start)
+    .lte("createdAt", end)
+    .order("createdAt", { ascending: false });
 
-  const saleWhere = {
-    ...dateFilter,
-    ...(userId && { userId }),
-    ...(method && { payments: { some: { method } } }),
-  };
+  if (userId) salesQuery = salesQuery.eq("userId", userId);
 
-  const [sales, byMethod, users] = await Promise.all([
-    prisma.sale.findMany({
-      where: saleWhere,
-      include: {
-        user: { select: { id: true, name: true } },
-        client: { select: { id: true, name: true } },
-        items: { include: { product: { select: { id: true, name: true } } } },
-        payments: true,
-      },
-      orderBy: { createdAt: "desc" },
-    }),
-    // Totales agrupados por método (siempre del día completo, sin filtrar por método)
-    prisma.salePayment.groupBy({
-      by: ["method"],
-      where: { sale: { ...dateFilter, ...(userId && { userId }) } },
-      _sum: { amount: true },
-    }),
-    // Cajeros que trabajaron ese día (para el select de filtro)
-    prisma.user.findMany({
-      where: {
-        sales: { some: dateFilter },
-      },
-      select: { id: true, name: true },
-      orderBy: { name: "asc" },
-    }),
-  ]);
+  const { data: allSales } = await salesQuery;
+  const sales = allSales ?? [];
 
-  const totalAmount = byMethod.reduce(
-    (acc, m) => acc + Number(m._sum.amount ?? 0),
-    0
-  );
+  // Filter by method in TypeScript (Supabase nested filter limitation)
+  const filtered = method
+    ? sales.filter((s) => (s.payments as { method: string }[]).some((p) => p.method === method))
+    : sales;
+
+  // Fetch unique users who worked that day
+  const { data: userRows } = await supabase
+    .from("Sale")
+    .select("userId, user:User(id,name)")
+    .gte("createdAt", start)
+    .lte("createdAt", end);
+
+  const usersMap = new Map<string, { id: string; name: string }>();
+  (userRows ?? []).forEach((r) => {
+    const u = r.user as unknown as { id: string; name: string } | null;
+    if (u) usersMap.set(u.id, u);
+  });
+
+  // Aggregate totals from un-filtered sales (full day)
+  const byMethodMap = new Map<string, number>();
+  sales.forEach((s) => {
+    (s.payments as { method: string; amount: number }[]).forEach((p) => {
+      byMethodMap.set(p.method, (byMethodMap.get(p.method) ?? 0) + Number(p.amount));
+    });
+  });
+
+  const totalAmount = Array.from(byMethodMap.values()).reduce((a, b) => a + b, 0);
 
   return NextResponse.json({
     date,
-    sales,
-    users,
+    sales: filtered,
+    users: Array.from(usersMap.values()),
     summary: {
       totalAmount,
-      totalSales: sales.length,
-      byMethod: byMethod.map((m) => ({
-        method: m.method,
-        amount: Number(m._sum.amount ?? 0),
-      })),
+      totalSales: filtered.length,
+      byMethod: Array.from(byMethodMap.entries()).map(([method, amount]) => ({ method, amount })),
     },
   });
 }

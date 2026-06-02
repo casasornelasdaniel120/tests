@@ -1,8 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import bcrypt from "bcryptjs";
-import type { Role } from "@prisma/client";
+import { createId } from "@paralleldrive/cuid2";
 
 export async function GET() {
   const session = await auth();
@@ -10,12 +10,13 @@ export async function GET() {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
-  const users = await prisma.user.findMany({
-    select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
-    orderBy: { name: "asc" },
-  });
+  const { data, error } = await getSupabaseAdmin()
+    .from("User")
+    .select("id, name, email, role, active, createdAt")
+    .order("name");
 
-  return NextResponse.json(users);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
 }
 
 export async function POST(req: Request) {
@@ -24,19 +25,15 @@ export async function POST(req: Request) {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
-  const body = await req.json() as {
-    name: string;
-    email: string;
-    password: string;
-    role: Role;
-  };
-
+  const body = await req.json() as { name: string; email: string; password: string; role: string };
   const hashed = await bcrypt.hash(body.password, 10);
 
-  const user = await prisma.user.create({
-    data: { ...body, password: hashed },
-    select: { id: true, name: true, email: true, role: true, active: true, createdAt: true },
-  });
+  const { data, error } = await getSupabaseAdmin()
+    .from("User")
+    .insert({ id: createId(), ...body, password: hashed })
+    .select("id, name, email, role, active, createdAt")
+    .single();
 
-  return NextResponse.json(user, { status: 201 });
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data, { status: 201 });
 }

@@ -1,56 +1,47 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { getSupabaseAdmin } from "@/lib/supabase-admin";
 import bcrypt from "bcryptjs";
-import type { Role } from "@prisma/client";
 
-export async function PUT(
-  req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
   const { id } = await params;
-  const body = await req.json() as Partial<{
-    name: string;
-    email: string;
-    password: string;
-    role: Role;
-    active: boolean;
-  }>;
+  const body = await req.json() as { name?: string; email?: string; password?: string; role?: string; active?: boolean };
 
-  const data: Partial<typeof body & { password: string }> = { ...body };
+  const update: Record<string, unknown> = { ...body };
   if (body.password) {
-    data.password = await bcrypt.hash(body.password, 10);
+    update.password = await bcrypt.hash(body.password, 10);
+  } else {
+    delete update.password;
   }
 
-  const user = await prisma.user.update({
-    where: { id },
-    data,
-    select: { id: true, name: true, email: true, role: true, active: true },
-  });
+  const { data, error } = await getSupabaseAdmin()
+    .from("User")
+    .update(update)
+    .eq("id", id)
+    .select("id, name, email, role, active")
+    .single();
 
-  return NextResponse.json(user);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
+  return NextResponse.json(data);
 }
 
-export async function DELETE(
-  _req: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function DELETE(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const session = await auth();
   if (!session || session.user.role !== "ADMIN") {
     return NextResponse.json({ error: "No autorizado" }, { status: 403 });
   }
 
   const { id } = await params;
-
   if (id === session.user.id) {
     return NextResponse.json({ error: "No puedes eliminarte a ti mismo" }, { status: 400 });
   }
 
-  await prisma.user.delete({ where: { id } });
+  const { error } = await getSupabaseAdmin().from("User").delete().eq("id", id);
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json({ ok: true });
 }
