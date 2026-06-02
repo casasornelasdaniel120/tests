@@ -126,6 +126,7 @@ export function POSScreen() {
       <div className="flex-1 flex flex-col overflow-hidden">
         <ProductGrid
           products={filtered}
+          allProducts={products}
           search={search}
           loading={productsLoading}
           onSearch={setSearch}

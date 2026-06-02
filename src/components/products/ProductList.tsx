@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, Pencil } from "lucide-react";
+import { Search, Plus, Pencil, Trash2 } from "lucide-react";
 import Image from "next/image";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -45,6 +45,12 @@ export function ProductList() {
   function openCreate() {
     setEditing(null);
     setFormOpen(true);
+  }
+
+  async function handleDelete(product: Product) {
+    if (!confirm(`¿Eliminar "${product.name}"? Esta acción no se puede deshacer.`)) return;
+    await fetch(`/api/products/${product.id}`, { method: "DELETE" });
+    load();
   }
 
   return (
@@ -108,14 +114,20 @@ export function ProductList() {
                 <span className="text-base font-bold text-gold">
                   {formatCurrency(product.price)}
                 </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => openEdit(product)}
-                >
-                  <Pencil size={14} />
-                  Editar
-                </Button>
+                <div className="flex items-center gap-1">
+                  <Button variant="ghost" size="sm" onClick={() => openEdit(product)}>
+                    <Pencil size={14} />
+                    Editar
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(product)}
+                    className="hover:text-red-400"
+                  >
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
               </div>
             </div>
           </div>

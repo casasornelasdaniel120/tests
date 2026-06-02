@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import Image from "next/image";
 import { Search, Plus } from "lucide-react";
 import { Input } from "@/components/ui/Input";
@@ -16,6 +17,7 @@ interface Product {
 
 interface ProductGridProps {
   products: Product[];
+  allProducts: Product[];
   search: string;
   loading: boolean;
   onSearch: (v: string) => void;
@@ -44,16 +46,51 @@ function SkeletonCard() {
   );
 }
 
-export function ProductGrid({ products, search, loading, onSearch, onAdd }: ProductGridProps) {
+export function ProductGrid({ products, allProducts, search, loading, onSearch, onAdd }: ProductGridProps) {
+  const [activeCategory, setActiveCategory] = useState<string | null>(null);
+
+  const categories = Array.from(new Set(allProducts.map((p) => p.category))).sort();
+
+  const visible = activeCategory
+    ? products.filter((p) => p.category === activeCategory)
+    : products;
+
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 py-4 border-b border-border">
+      <div className="px-6 pt-4 pb-3 border-b border-border flex flex-col gap-3">
         <Input
           placeholder="Buscar paquete o categoría…"
           value={search}
-          onChange={(e) => onSearch(e.target.value)}
+          onChange={(e) => { onSearch(e.target.value); setActiveCategory(null); }}
           leftIcon={<Search size={16} />}
         />
+        {!loading && categories.length > 1 && (
+          <div className="flex gap-2 flex-wrap">
+            <button
+              onClick={() => setActiveCategory(null)}
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+                activeCategory === null
+                  ? "bg-gold/15 text-gold border-gold/30"
+                  : "border-border text-text-secondary hover:text-text-primary"
+              }`}
+            >
+              Todos
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+                  activeCategory === cat
+                    ? "bg-gold/15 text-gold border-gold/30"
+                    : "border-border text-text-secondary hover:text-text-primary"
+                }`}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
@@ -63,13 +100,13 @@ export function ProductGrid({ products, search, loading, onSearch, onAdd }: Prod
               <SkeletonCard key={i} />
             ))}
           </div>
-        ) : products.length === 0 ? (
+        ) : visible.length === 0 ? (
           <div className="flex flex-col items-center justify-center h-full text-text-secondary gap-2">
             <p>No hay productos activos</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
-            {products.map((product) => (
+            {visible.map((product) => (
               <button
                 key={product.id}
                 onClick={() => onAdd(product)}

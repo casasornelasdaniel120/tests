@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, ChevronRight } from "lucide-react";
+import { Search, Plus, ChevronRight, Pencil, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
@@ -37,6 +37,12 @@ export function ClientList() {
   function openCreate() {
     setEditing(null);
     setFormOpen(true);
+  }
+
+  async function handleDelete(client: Client) {
+    if (!confirm(`¿Eliminar a ${client.name}? Esta acción no se puede deshacer.`)) return;
+    await fetch(`/api/clients/${client.id}`, { method: "DELETE" });
+    load();
   }
 
   return (
@@ -88,12 +94,26 @@ export function ClientList() {
                     {client.email ?? "—"}
                   </td>
                   <td className="px-6 py-4 text-right">
-                    <Link
-                      href={`/clientes/${client.id}`}
-                      className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-gold transition-colors"
-                    >
-                      Ver ficha <ChevronRight size={14} />
-                    </Link>
+                    <div className="flex items-center justify-end gap-3">
+                      <button
+                        onClick={() => { setEditing(client); setFormOpen(true); }}
+                        className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-gold transition-colors"
+                      >
+                        <Pencil size={13} /> Editar
+                      </button>
+                      <Link
+                        href={`/clientes/${client.id}`}
+                        className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-gold transition-colors"
+                      >
+                        Ver ficha <ChevronRight size={14} />
+                      </Link>
+                      <button
+                        onClick={() => handleDelete(client)}
+                        className="inline-flex items-center gap-1 text-xs text-text-secondary hover:text-red-400 transition-colors"
+                      >
+                        <Trash2 size={13} />
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
