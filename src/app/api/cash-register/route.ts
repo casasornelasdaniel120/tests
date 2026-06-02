@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { prisma } from "@/lib/prisma";
+import type { PaymentMethod } from "@prisma/client";
 
 export async function GET(req: Request) {
   const session = await auth();
@@ -10,13 +11,23 @@ export async function GET(req: Request) {
 
   const { searchParams } = new URL(req.url);
   const date = searchParams.get("date") ?? new Date().toISOString().split("T")[0];
+  const userId = searchParams.get("userId") ?? undefined;
+  const method = searchParams.get("method") as PaymentMethod | null;
 
   const start = new Date(`${date}T00:00:00`);
   const end = new Date(`${date}T23:59:59`);
 
-  const [sales, totals] = await Promise.all([
+  const dateFilter = { createdAt: { gte: start, lte: end } };
+
+  const saleWhere = {
+    ...dateFilter,
+    ...(userId && { userId }),
+    ...(method && { payments: { some: { method } } }),
+  };
+
+  const [sales, byMethod, users] = await Promise.all([
     prisma.sale.findMany({
-      where: { createdAt: { gte: start, lte: end } },
+      where: saleWhere,
       include: {
         user: { select: { id: true, name: true } },
         client: { select: { id: true, name: true } },
@@ -25,27 +36,37 @@ export async function GET(req: Request) {
       },
       orderBy: { createdAt: "desc" },
     }),
-    prisma.salePayment.aggregate({
-      where: { sale: { createdAt: { gte: start, lte: end } } },
+    // Totales agrupados por método (siempre del día completo, sin filtrar por método)
+    prisma.salePayment.groupBy({
+      by: ["method"],
+      where: { sale: { ...dateFilter, ...(userId && { userId }) } },
       _sum: { amount: true },
+    }),
+    // Cajeros que trabajaron ese día (para el select de filtro)
+    prisma.user.findMany({
+      where: {
+        sales: { some: dateFilter },
+      },
+      select: { id: true, name: true },
+      orderBy: { name: "asc" },
     }),
   ]);
 
-  const byMethod = await prisma.salePayment.groupBy({
-    by: ["method"],
-    where: { sale: { createdAt: { gte: start, lte: end } } },
-    _sum: { amount: true },
-  });
+  const totalAmount = byMethod.reduce(
+    (acc, m) => acc + Number(m._sum.amount ?? 0),
+    0
+  );
 
   return NextResponse.json({
     date,
     sales,
+    users,
     summary: {
-      totalAmount: totals._sum.amount ?? 0,
+      totalAmount,
       totalSales: sales.length,
       byMethod: byMethod.map((m) => ({
         method: m.method,
-        amount: m._sum.amount ?? 0,
+        amount: Number(m._sum.amount ?? 0),
       })),
     },
   });
