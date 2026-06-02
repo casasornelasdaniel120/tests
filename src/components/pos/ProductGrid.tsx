@@ -17,6 +17,7 @@ interface Product {
 interface ProductGridProps {
   products: Product[];
   search: string;
+  loading: boolean;
   onSearch: (v: string) => void;
   onAdd: (product: Product) => void;
 }
@@ -26,10 +27,24 @@ const CATEGORY_COLORS: Record<string, string> = {
   Corporativo: "bg-blue-500/10 text-blue-400",
   Quinceañera: "bg-gold/10 text-gold",
   Familia: "bg-emerald-500/10 text-emerald-400",
-  "Bebé": "bg-purple-500/10 text-purple-400",
+  Bebé: "bg-purple-500/10 text-purple-400",
 };
 
-export function ProductGrid({ products, search, onSearch, onAdd }: ProductGridProps) {
+function SkeletonCard() {
+  return (
+    <div className="bg-bg-surface border border-border rounded-2xl overflow-hidden animate-pulse">
+      <div className="aspect-video bg-bg-elevated" />
+      <div className="p-4 flex flex-col gap-2">
+        <div className="h-4 w-16 bg-bg-elevated rounded-full" />
+        <div className="h-4 w-3/4 bg-bg-elevated rounded" />
+        <div className="h-3 w-full bg-bg-elevated rounded" />
+        <div className="h-5 w-20 bg-bg-elevated rounded mt-1" />
+      </div>
+    </div>
+  );
+}
+
+export function ProductGrid({ products, search, loading, onSearch, onAdd }: ProductGridProps) {
   return (
     <div className="flex flex-col h-full">
       <div className="px-6 py-4 border-b border-border">
@@ -42,9 +57,15 @@ export function ProductGrid({ products, search, onSearch, onAdd }: ProductGridPr
       </div>
 
       <div className="flex-1 overflow-y-auto p-6">
-        {products.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-text-secondary">
-            <p>No hay productos disponibles</p>
+        {loading ? (
+          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+            {Array.from({ length: 6 }).map((_, i) => (
+              <SkeletonCard key={i} />
+            ))}
+          </div>
+        ) : products.length === 0 ? (
+          <div className="flex flex-col items-center justify-center h-full text-text-secondary gap-2">
+            <p>No hay productos activos</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">

@@ -16,6 +16,7 @@ export function POSScreen() {
     image: string | null;
     category: string;
   }[]>([]);
+  const [productsLoading, setProductsLoading] = useState(true);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [globalDiscount, setGlobalDiscount] = useState(0);
   const [selectedClient, setSelectedClient] = useState<{
@@ -29,7 +30,8 @@ export function POSScreen() {
   useEffect(() => {
     fetch("/api/products?active=true")
       .then((r) => r.json())
-      .then((data: typeof products) => setProducts(data));
+      .then((data: typeof products) => setProducts(data))
+      .finally(() => setProductsLoading(false));
   }, []);
 
   function addToCart(product: (typeof products)[0]) {
@@ -125,6 +127,7 @@ export function POSScreen() {
         <ProductGrid
           products={filtered}
           search={search}
+          loading={productsLoading}
           onSearch={setSearch}
           onAdd={addToCart}
         />

@@ -19,20 +19,24 @@ export default function LoginPage() {
     setError("");
     setLoading(true);
 
-    const result = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    try {
+      const result = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-    setLoading(false);
+      if (!result || result.error) {
+        setError("Correo o contraseña incorrectos");
+        return;
+      }
 
-    if (result?.error) {
+      router.push("/pos");
+    } catch {
       setError("Correo o contraseña incorrectos");
-      return;
+    } finally {
+      setLoading(false);
     }
-
-    router.push("/pos");
   }
 
   return (
