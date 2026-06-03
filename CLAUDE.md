@@ -1,1 +1,105 @@
+# CLAUDE.md
+
+This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+
 @AGENTS.md
+
+## Commands
+
+```bash
+npm run dev          # Start dev server (Turbopack)
+npm run build        # prisma generate + next build
+npm run lint         # ESLint
+
+npm run db:generate  # Regenerate Prisma client after schema changes
+npm run db:migrate   # Apply schema migrations (dev)
+npm run db:seed      # Seed database with demo data
+npm run db:studio    # Open Prisma Studio GUI
+```
+
+No test suite is configured. Playwright is installed as a dev dependency but has no test files yet.
+
+## Architecture
+
+### Stack
+- **Next.js 16** (App Router) — see `node_modules/next/dist/docs/` for API specifics; this version has breaking changes from prior releases
+- **NextAuth v5 beta** (`next-auth@^5.0.0-beta.31`) — credentials-only auth with JWT sessions
+- **Prisma 6** — schema definition and migrations only; **not used for runtime queries**
+- **Supabase JS client** — all runtime database reads/writes go through `getSupabaseAdmin()` using the service role key
+- **Tailwind CSS v4** — configured via PostCSS; custom design tokens in `globals.css`
+- **Zustand** — available but not yet wired to any store
+
+### Dual Prisma / Supabase Pattern
+Prisma owns the schema (`prisma/schema.prisma`) and migration history. At runtime every API route discards Prisma and calls Supabase directly via the service role client from `src/lib/supabase-admin.ts`. The `src/lib/prisma.ts` singleton exists but is not called from any API route — it's only used in `prisma/seed.ts`.
+
+When adding new queries: use `getSupabaseAdmin()`, not `prisma`. When changing the schema: edit `schema.prisma` and run `db:migrate`, then `db:generate`.
+
+### Auth & Role Guard
+`src/lib/auth.ts` exports `{ handlers, signIn, signOut, auth }` from NextAuth. The `auth()` function is the primary way to get the session in Server Components and Route Handlers.
+
+Three roles (defined in Prisma enum `Role`):
+
+| Role | Access |
+|------|--------|
+| `ADMIN` | Everything |
+| `CAJERO` | POS (`/pos`), cash register (`/caja`) |
+| `EDITOR` | Clients (`/clientes`), products (`/productos`) |
+
+Role guards are applied at two levels:
+1. **Page level** — server components redirect unauthorized roles (e.g. `/pos/page.tsx` redirects EDITORs to `/clientes`)
+2. **API level** — every route handler checks `session.user.role`
+
+### Route Structure
+
+```
+src/app/
+  (auth)/login/          ← public login page
+  (dashboard)/           ← protected; layout wraps all with Sidebar + session check
+    pos/                 ← POS terminal (ADMIN, CAJERO)
+    clientes/            ← client list + detail (ADMIN, EDITOR)
+    productos/           ← product list + detail (ADMIN, EDITOR)
+    caja/                ← cash register / daily report (ADMIN, CAJERO)
+    usuarios/            ← user management (ADMIN only)
+  api/
+    auth/[...nextauth]/  ← NextAuth handler
+    products/            ← GET (all roles), POST/PATCH/DELETE (ADMIN, EDITOR)
+    clients/             ← GET (all roles), POST/PATCH/DELETE (ADMIN, EDITOR)
+    sales/               ← GET (all roles), POST (ADMIN, CAJERO)
+    users/               ← GET/POST/PATCH (ADMIN only)
+    cash-register/       ← GET daily summary (ADMIN, CAJERO)
+    upload/              ← POST image to Supabase Storage bucket "productos"
+```
+
+### POS Flow
+`POSScreen` (client component) orchestrates the entire point-of-sale:
+1. Loads active products from `/api/products?active=true` on mount
+2. Manages cart state locally (`CartItem[]`) with per-item and global discounts
+3. `PaymentModal` collects split-payment entries (`PaymentEntry[]`)
+4. On confirm → POST to `/api/sales` → receives `SaleWithDetails` back
+5. `TicketPreview` renders the receipt (printable via `react-to-print`)
+
+`Sale` total = subtotal − per-item discounts − global discount. A sale can have multiple `SalePayment` rows (split payment across methods).
+
+### Design Tokens
+Custom colors are CSS variables defined in `src/app/globals.css` and exposed to Tailwind via `@theme inline`. Use these token names in classes:
+
+- `bg-bg-base`, `bg-bg-surface`, `bg-bg-elevated`
+- `text-text-primary`, `text-text-secondary`
+- `border-border`
+- `text-gold` / `bg-gold` — primary brand green (#15803d), despite the name
+- `text-cta` / `bg-cta` — blue CTA (#2563eb)
+- `text-rose` / `bg-rose` — destructive/alert red
+
+### Image Uploads
+`POST /api/upload` accepts `multipart/form-data` with a `file` field, stores to the Supabase Storage bucket `"productos"`, and returns `{ url }`. Max 5 MB; allowed types: jpeg, png, webp, gif.
+
+## Environment Variables
+
+| Variable | Purpose |
+|----------|---------|
+| `DATABASE_URL` | Prisma migrations (direct Postgres) |
+| `DIRECT_URL` | Prisma direct connection |
+| `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
+| `SUPABASE_SERVICE_ROLE_KEY` | Service-role key for server-side Supabase client |
+| `NEXTAUTH_SECRET` | JWT signing secret |
+| `NEXTAUTH_URL` | Base URL for NextAuth callbacks |
