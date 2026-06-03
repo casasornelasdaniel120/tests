@@ -57,7 +57,7 @@ export function ProductGrid({ products, allProducts, search, loading, onSearch, 
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 pt-4 pb-3 border-b border-border bg-bg-surface flex flex-col gap-3">
+      <div className="px-3 sm:px-6 pt-3 sm:pt-4 pb-3 border-b border-border bg-bg-surface flex flex-col gap-3">
         <Input
           placeholder="Buscar paquete o categoría…"
           value={search}
@@ -93,9 +93,9 @@ export function ProductGrid({ products, allProducts, search, loading, onSearch, 
         )}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6">
         {loading ? (
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 md:grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             {Array.from({ length: 6 }).map((_, i) => (
               <SkeletonCard key={i} />
             ))}
@@ -106,7 +106,7 @@ export function ProductGrid({ products, allProducts, search, loading, onSearch, 
             <p className="text-sm">No hay productos activos</p>
           </div>
         ) : (
-          <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
+          <div className="grid grid-cols-2 xl:grid-cols-3 gap-3 sm:gap-4">
             {visible.map((product) => (
               <button
                 key={product.id}
@@ -132,7 +132,7 @@ export function ProductGrid({ products, allProducts, search, loading, onSearch, 
                     </div>
                   </div>
                 </div>
-                <div className="p-4">
+                <div className="p-2.5 sm:p-4">
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       CATEGORY_COLORS[product.category] ?? "bg-bg-elevated text-text-secondary border border-border"
@@ -140,15 +140,15 @@ export function ProductGrid({ products, allProducts, search, loading, onSearch, 
                   >
                     {product.category}
                   </span>
-                  <p className="text-sm font-semibold text-text-primary mt-2 leading-tight">
+                  <p className="text-xs sm:text-sm font-semibold text-text-primary mt-1.5 sm:mt-2 leading-tight">
                     {product.name}
                   </p>
                   {product.description && (
-                    <p className="text-xs text-text-secondary mt-1 line-clamp-2">
+                    <p className="text-xs text-text-secondary mt-1 line-clamp-2 hidden sm:block">
                       {product.description}
                     </p>
                   )}
-                  <p className="text-base font-bold text-gold mt-3">
+                  <p className="text-sm sm:text-base font-bold text-gold mt-2 sm:mt-3">
                     {formatCurrency(product.price)}
                   </p>
                 </div>

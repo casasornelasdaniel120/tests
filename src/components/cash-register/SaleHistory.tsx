@@ -91,22 +91,23 @@ export function SaleHistory() {
   const hasFilters = filterUser || filterMethod;
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       {/* Header */}
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">Caja del día</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Caja del día</h1>
         <Button
           variant="secondary"
           onClick={() => setCorteOpen(true)}
           disabled={!summary || summary.totalSales === 0}
         >
           <FileText size={16} />
-          Corte de caja
+          <span className="hidden sm:inline">Corte de caja</span>
+          <span className="sm:hidden">Corte</span>
         </Button>
       </div>
 
       {/* Filters bar */}
-      <div className="flex flex-wrap gap-3 mb-6">
+      <div className="flex flex-wrap gap-2 sm:gap-3 mb-6">
         {/* Date */}
         <div className="flex items-center gap-2 h-10 bg-bg-elevated border border-border rounded-lg px-3">
           <Calendar size={14} className="text-text-secondary shrink-0" />
@@ -159,7 +160,7 @@ export function SaleHistory() {
 
       {/* Summary cards */}
       {summary && (
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-6 sm:mb-8">
           <div className="bg-bg-surface border border-border rounded-xl p-4">
             <p className="text-xs text-text-secondary">
               Total {hasFilters ? "(filtrado)" : "del día"}

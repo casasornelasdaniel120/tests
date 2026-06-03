@@ -1,10 +1,12 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { ShoppingCart, X } from "lucide-react";
 import { ProductGrid } from "./ProductGrid";
 import { Cart } from "./Cart";
 import { PaymentModal } from "./PaymentModal";
 import { TicketPreview } from "./TicketPreview";
+import { formatCurrency } from "@/lib/utils";
 import type { CartItem, CreateSalePayload, PaymentEntry, SaleWithDetails } from "@/types";
 
 export function POSScreen() {
@@ -26,6 +28,7 @@ export function POSScreen() {
   const [paymentOpen, setPaymentOpen] = useState(false);
   const [completedSale, setCompletedSale] = useState<SaleWithDetails | null>(null);
   const [search, setSearch] = useState("");
+  const [cartOpen, setCartOpen] = useState(false);
 
   useEffect(() => {
     fetch("/api/products?active=true")
@@ -112,6 +115,7 @@ export function POSScreen() {
       setGlobalDiscount(0);
       setSelectedClient(null);
       setPaymentOpen(false);
+      setCartOpen(false);
     }
   }
 
@@ -121,9 +125,23 @@ export function POSScreen() {
       p.category.toLowerCase().includes(search.toLowerCase())
   );
 
+  const cartProps = {
+    cart,
+    globalDiscount,
+    subtotal,
+    itemDiscounts,
+    total,
+    selectedClient,
+    onUpdateItem: updateItem,
+    onRemoveItem: removeItem,
+    onGlobalDiscount: setGlobalDiscount,
+    onSelectClient: setSelectedClient,
+  };
+
   return (
-    <div className="flex h-full">
-      <div className="flex-1 flex flex-col overflow-hidden">
+    <div className="flex h-full relative">
+      {/* Product grid — full width on mobile/tablet, shrinks on desktop */}
+      <div className="flex-1 flex flex-col overflow-hidden min-w-0">
         <ProductGrid
           products={filtered}
           allProducts={products}
@@ -134,19 +152,58 @@ export function POSScreen() {
         />
       </div>
 
-      <Cart
-        cart={cart}
-        globalDiscount={globalDiscount}
-        subtotal={subtotal}
-        itemDiscounts={itemDiscounts}
-        total={total}
-        selectedClient={selectedClient}
-        onUpdateItem={updateItem}
-        onRemoveItem={removeItem}
-        onGlobalDiscount={setGlobalDiscount}
-        onSelectClient={setSelectedClient}
-        onCharge={() => setPaymentOpen(true)}
-      />
+      {/* Desktop + tablet cart panel (md+) */}
+      <div className="hidden md:flex md:w-64 lg:w-80 shrink-0">
+        <Cart
+          {...cartProps}
+          className="w-full border-l-0 md:border-l"
+          onCharge={() => setPaymentOpen(true)}
+        />
+      </div>
+
+      {/* Mobile floating cart button (< md) */}
+      {cart.length > 0 && (
+        <button
+          onClick={() => setCartOpen(true)}
+          className="md:hidden fixed bottom-20 right-4 z-30 bg-cta text-white rounded-2xl px-4 py-3 shadow-xl flex items-center gap-2 transition-all active:scale-95"
+        >
+          <ShoppingCart size={18} />
+          <span className="font-bold">{formatCurrency(total)}</span>
+          <span className="bg-white/25 rounded-full px-2 py-0.5 text-xs font-semibold">
+            {cart.length}
+          </span>
+        </button>
+      )}
+
+      {/* Mobile cart drawer (< md) */}
+      {cartOpen && (
+        <div className="md:hidden fixed inset-0 z-40">
+          <div
+            className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            onClick={() => setCartOpen(false)}
+          />
+          <div
+            className="absolute bottom-0 left-0 right-0 rounded-t-2xl bg-bg-surface shadow-2xl flex flex-col overflow-hidden"
+            style={{ maxHeight: "90dvh" }}
+          >
+            {/* Drag handle + close */}
+            <div className="flex items-center justify-between px-5 pt-3 pb-1 shrink-0">
+              <div className="w-10 h-1 rounded-full bg-border mx-auto" />
+            </div>
+            <button
+              onClick={() => setCartOpen(false)}
+              className="absolute top-3 right-4 text-text-secondary hover:text-text-primary transition-colors"
+            >
+              <X size={20} />
+            </button>
+            <Cart
+              {...cartProps}
+              className="w-full border-l-0 h-auto flex-1"
+              onCharge={() => { setCartOpen(false); setPaymentOpen(true); }}
+            />
+          </div>
+        </div>
+      )}
 
       {paymentOpen && (
         <PaymentModal

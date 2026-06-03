@@ -62,72 +62,83 @@ export function UserList() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">Usuarios</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Usuarios</h1>
         <Button onClick={openCreate}>
           <Plus size={16} />
-          Nuevo usuario
+          <span className="hidden sm:inline">Nuevo usuario</span>
+          <span className="sm:hidden">Nuevo</span>
         </Button>
       </div>
 
       <div className="bg-bg-surface border border-border rounded-2xl overflow-hidden">
-        <table className="w-full">
-          <thead>
-            <tr className="border-b border-border">
-              <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary">Nombre</th>
-              <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary">Email</th>
-              <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary">Rol</th>
-              <th className="text-left px-6 py-3 text-xs font-medium text-text-secondary">Estado</th>
-              <th className="px-6 py-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {users.map((user) => (
-              <tr
-                key={user.id}
-                className="border-b border-border last:border-0 hover:bg-bg-elevated transition-colors"
-              >
-                <td className="px-6 py-4 text-sm font-medium text-text-primary">
-                  {user.name}
-                </td>
-                <td className="px-6 py-4 text-sm text-text-secondary">
-                  {user.email}
-                </td>
-                <td className="px-6 py-4">
-                  <Badge variant={ROLE_BADGE[user.role]}>
-                    {ROLE_LABEL[user.role]}
-                  </Badge>
-                </td>
-                <td className="px-6 py-4">
-                  <Badge variant={user.active ? "success" : "error"}>
-                    {user.active ? "Activo" : "Inactivo"}
-                  </Badge>
-                </td>
-                <td className="px-6 py-4">
-                  <div className="flex items-center justify-end gap-2">
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => openEdit(user)}
-                    >
-                      <Pencil size={14} />
-                      Editar
-                    </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => toggleActive(user)}
-                    >
-                      <Power size={14} />
-                      {user.active ? "Desactivar" : "Activar"}
-                    </Button>
-                  </div>
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[460px]">
+            <thead>
+              <tr className="border-b border-border">
+                <th className="text-left px-4 sm:px-6 py-3 text-xs font-medium text-text-secondary">Nombre</th>
+                <th className="text-left px-4 sm:px-6 py-3 text-xs font-medium text-text-secondary hidden sm:table-cell">Email</th>
+                <th className="text-left px-4 sm:px-6 py-3 text-xs font-medium text-text-secondary">Rol</th>
+                <th className="text-left px-4 sm:px-6 py-3 text-xs font-medium text-text-secondary hidden sm:table-cell">Estado</th>
+                <th className="px-4 sm:px-6 py-3" />
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {users.map((user) => (
+                <tr
+                  key={user.id}
+                  className="border-b border-border last:border-0 hover:bg-bg-elevated transition-colors"
+                >
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm font-medium text-text-primary">
+                    <div>
+                      {user.name}
+                      <div className="sm:hidden flex items-center gap-2 mt-1">
+                        <Badge variant={ROLE_BADGE[user.role]}>{ROLE_LABEL[user.role]}</Badge>
+                        <Badge variant={user.active ? "success" : "error"}>
+                          {user.active ? "Activo" : "Inactivo"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 text-sm text-text-secondary hidden sm:table-cell">
+                    {user.email}
+                  </td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 hidden sm:table-cell">
+                    <Badge variant={ROLE_BADGE[user.role]}>
+                      {ROLE_LABEL[user.role]}
+                    </Badge>
+                  </td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4 hidden sm:table-cell">
+                    <Badge variant={user.active ? "success" : "error"}>
+                      {user.active ? "Activo" : "Inactivo"}
+                    </Badge>
+                  </td>
+                  <td className="px-4 sm:px-6 py-3 sm:py-4">
+                    <div className="flex items-center justify-end gap-1 sm:gap-2">
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => openEdit(user)}
+                      >
+                        <Pencil size={14} />
+                        <span className="hidden sm:inline">Editar</span>
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={() => toggleActive(user)}
+                      >
+                        <Power size={14} />
+                        <span className="hidden sm:inline">{user.active ? "Desactivar" : "Activar"}</span>
+                      </Button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       <Modal

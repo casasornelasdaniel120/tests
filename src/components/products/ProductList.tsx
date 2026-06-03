@@ -54,12 +54,13 @@ export function ProductList() {
   }
 
   return (
-    <div className="p-8">
+    <div className="p-4 sm:p-6 md:p-8">
       <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold text-text-primary">Productos</h1>
+        <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Productos</h1>
         <Button onClick={openCreate}>
           <Plus size={16} />
-          Nuevo producto
+          <span className="hidden sm:inline">Nuevo producto</span>
+          <span className="sm:hidden">Nuevo</span>
         </Button>
       </div>
 
@@ -68,7 +69,7 @@ export function ProductList() {
         value={search}
         onChange={(e) => setSearch(e.target.value)}
         leftIcon={<Search size={16} />}
-        className="mb-6 max-w-md"
+        className="mb-6 w-full max-w-md"
       />
 
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">

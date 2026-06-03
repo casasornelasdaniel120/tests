@@ -58,7 +58,7 @@ export default function LoginPage() {
         {/* Form */}
         <form
           onSubmit={handleSubmit}
-          className="bg-bg-surface border border-border rounded-2xl p-8 shadow-xl flex flex-col gap-5"
+          className="bg-bg-surface border border-border rounded-2xl p-5 sm:p-8 shadow-xl flex flex-col gap-5"
         >
           <Input
             label="Correo electrónico"

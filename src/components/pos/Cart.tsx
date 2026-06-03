@@ -5,7 +5,7 @@ import { ShoppingCart, Trash2, User, X } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { CartItem as CartItemComponent } from "./CartItem";
 import { ClientSearch } from "./ClientSearch";
-import { formatCurrency } from "@/lib/utils";
+import { cn, formatCurrency } from "@/lib/utils";
 import type { CartItem } from "@/types";
 
 interface CartProps {
@@ -20,6 +20,7 @@ interface CartProps {
   onGlobalDiscount: (v: number) => void;
   onSelectClient: (client: { id: string; name: string } | null) => void;
   onCharge: () => void;
+  className?: string;
 }
 
 export function Cart({
@@ -34,6 +35,7 @@ export function Cart({
   onGlobalDiscount,
   onSelectClient,
   onCharge,
+  className,
 }: CartProps) {
   const [clientSearchOpen, setClientSearchOpen] = useState(false);
   const [discountInput, setDiscountInput] = useState("");
@@ -51,7 +53,7 @@ export function Cart({
   }
 
   return (
-    <div className="w-80 shrink-0 bg-bg-surface border-l border-border flex flex-col h-full shadow-sm">
+    <div className={cn("w-80 shrink-0 bg-bg-surface border-l border-border flex flex-col h-full shadow-sm", className)}>
       {/* Header */}
       <div className="px-5 py-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2 text-text-primary font-semibold">
