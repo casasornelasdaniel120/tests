@@ -11,6 +11,7 @@ import {
   BarChart3,
   UserCog,
   LogOut,
+  Leaf,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@prisma/client";
@@ -41,16 +42,21 @@ export function Sidebar({ role, userName }: SidebarProps) {
   const allowed = NAV_ITEMS.filter((item) => item.roles.includes(role));
 
   return (
-    <aside className="w-60 shrink-0 h-full bg-bg-surface border-r border-border flex flex-col">
+    <aside className="w-60 shrink-0 h-full bg-bg-surface border-r border-border flex flex-col shadow-sm">
       {/* Brand */}
-      <div className="flex items-center gap-3 px-5 py-5 border-b border-border">
-        <div className="w-9 h-9 rounded-xl bg-gold/10 border border-gold/30 flex items-center justify-center">
+      <div className="relative flex items-center gap-3 px-5 py-5 border-b border-border overflow-hidden">
+        <div className="absolute -right-6 -top-6 w-24 h-24 rounded-full bg-gold/5 pointer-events-none" />
+        <div className="absolute -right-2 -bottom-6 w-16 h-16 rounded-full bg-cta/5 pointer-events-none" />
+        <div className="w-9 h-9 rounded-2xl bg-gold/10 border border-gold/20 flex items-center justify-center shrink-0">
           <Camera className="text-gold" size={18} />
         </div>
         <div>
-          <p className="text-sm font-semibold text-text-primary leading-none">
-            Foto POS
-          </p>
+          <div className="flex items-center gap-1.5">
+            <p className="text-sm font-semibold text-text-primary leading-none">
+              Foto POS
+            </p>
+            <Leaf size={11} className="text-gold opacity-50" />
+          </div>
           <p className="text-xs text-text-secondary mt-0.5 capitalize">
             {role.toLowerCase()}
           </p>
@@ -66,13 +72,13 @@ export function Sidebar({ role, userName }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-colors",
+                "flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all",
                 active
-                  ? "bg-gold/10 text-gold border border-gold/20"
-                  : "text-text-secondary hover:text-text-primary hover:bg-bg-elevated"
+                  ? "bg-gold/10 text-gold border border-gold/20 shadow-sm"
+                  : "text-text-secondary hover:text-text-primary hover:bg-bg-base"
               )}
             >
-              <item.icon size={18} />
+              <item.icon size={17} />
               {item.label}
             </Link>
           );
@@ -82,12 +88,12 @@ export function Sidebar({ role, userName }: SidebarProps) {
       {/* User */}
       <div className="px-3 py-4 border-t border-border">
         <div className="px-3 py-2 mb-1">
-          <p className="text-xs font-medium text-text-primary truncate">{userName}</p>
+          <p className="text-xs font-semibold text-text-primary truncate">{userName}</p>
           <p className="text-xs text-text-secondary capitalize">{role.toLowerCase()}</p>
         </div>
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-text-secondary hover:text-red-400 hover:bg-red-900/10 transition-colors"
+          className="flex items-center gap-3 w-full px-3 py-2.5 rounded-xl text-sm text-text-secondary hover:text-red-500 hover:bg-red-50 transition-all cursor-pointer"
         >
           <LogOut size={16} />
           Cerrar sesión

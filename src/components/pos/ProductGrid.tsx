@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Image from "next/image";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, TreePine } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { formatCurrency } from "@/lib/utils";
 
@@ -25,11 +25,11 @@ interface ProductGridProps {
 }
 
 const CATEGORY_COLORS: Record<string, string> = {
-  Retrato: "bg-rose/10 text-rose",
-  Corporativo: "bg-blue-500/10 text-blue-400",
-  Quinceañera: "bg-gold/10 text-gold",
-  Familia: "bg-emerald-500/10 text-emerald-400",
-  Bebé: "bg-purple-500/10 text-purple-400",
+  Retrato: "bg-amber-50 text-amber-700 border border-amber-200",
+  Corporativo: "bg-blue-50 text-blue-700 border border-blue-200",
+  Quinceañera: "bg-pink-50 text-pink-700 border border-pink-200",
+  Familia: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  Bebé: "bg-violet-50 text-violet-700 border border-violet-200",
 };
 
 function SkeletonCard() {
@@ -57,7 +57,7 @@ export function ProductGrid({ products, allProducts, search, loading, onSearch, 
 
   return (
     <div className="flex flex-col h-full">
-      <div className="px-6 pt-4 pb-3 border-b border-border flex flex-col gap-3">
+      <div className="px-6 pt-4 pb-3 border-b border-border bg-bg-surface flex flex-col gap-3">
         <Input
           placeholder="Buscar paquete o categoría…"
           value={search}
@@ -68,10 +68,10 @@ export function ProductGrid({ products, allProducts, search, loading, onSearch, 
           <div className="flex gap-2 flex-wrap">
             <button
               onClick={() => setActiveCategory(null)}
-              className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+              className={`px-3 py-1 rounded-full text-xs font-medium transition-all border cursor-pointer ${
                 activeCategory === null
-                  ? "bg-gold/15 text-gold border-gold/30"
-                  : "border-border text-text-secondary hover:text-text-primary"
+                  ? "bg-gold/10 text-gold border-gold/30 shadow-sm"
+                  : "border-border text-text-secondary hover:text-text-primary hover:border-gold/30"
               }`}
             >
               Todos
@@ -80,10 +80,10 @@ export function ProductGrid({ products, allProducts, search, loading, onSearch, 
               <button
                 key={cat}
                 onClick={() => setActiveCategory(activeCategory === cat ? null : cat)}
-                className={`px-3 py-1 rounded-full text-xs font-medium transition-colors border ${
+                className={`px-3 py-1 rounded-full text-xs font-medium transition-all border cursor-pointer ${
                   activeCategory === cat
-                    ? "bg-gold/15 text-gold border-gold/30"
-                    : "border-border text-text-secondary hover:text-text-primary"
+                    ? "bg-gold/10 text-gold border-gold/30 shadow-sm"
+                    : "border-border text-text-secondary hover:text-text-primary hover:border-gold/30"
                 }`}
               >
                 {cat}
@@ -101,8 +101,9 @@ export function ProductGrid({ products, allProducts, search, loading, onSearch, 
             ))}
           </div>
         ) : visible.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-text-secondary gap-2">
-            <p>No hay productos activos</p>
+          <div className="flex flex-col items-center justify-center h-full text-text-secondary gap-3">
+            <TreePine size={40} className="opacity-20 text-gold" />
+            <p className="text-sm">No hay productos activos</p>
           </div>
         ) : (
           <div className="grid grid-cols-2 xl:grid-cols-3 gap-4">
@@ -110,7 +111,7 @@ export function ProductGrid({ products, allProducts, search, loading, onSearch, 
               <button
                 key={product.id}
                 onClick={() => onAdd(product)}
-                className="group relative bg-bg-surface border border-border rounded-2xl overflow-hidden text-left hover:border-gold/40 transition-all hover:shadow-lg hover:shadow-gold/5"
+                className="group relative bg-bg-surface border border-border rounded-2xl overflow-hidden text-left hover:border-gold/40 transition-all hover:shadow-lg hover:shadow-black/5 cursor-pointer"
               >
                 <div className="aspect-video bg-bg-elevated relative overflow-hidden">
                   {product.image ? (
@@ -125,16 +126,16 @@ export function ProductGrid({ products, allProducts, search, loading, onSearch, 
                       {product.name[0]}
                     </div>
                   )}
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    <div className="w-10 h-10 rounded-full bg-gold/90 flex items-center justify-center opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all">
-                      <Plus size={20} className="text-bg-base" />
+                  <div className="absolute inset-0 bg-gold/0 group-hover:bg-gold/5 transition-colors flex items-center justify-center">
+                    <div className="w-10 h-10 rounded-full bg-gold flex items-center justify-center opacity-0 group-hover:opacity-100 scale-75 group-hover:scale-100 transition-all shadow-md">
+                      <Plus size={20} className="text-white" />
                     </div>
                   </div>
                 </div>
                 <div className="p-4">
                   <span
                     className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      CATEGORY_COLORS[product.category] ?? "bg-bg-elevated text-text-secondary"
+                      CATEGORY_COLORS[product.category] ?? "bg-bg-elevated text-text-secondary border border-border"
                     }`}
                   >
                     {product.category}

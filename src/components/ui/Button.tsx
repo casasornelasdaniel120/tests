@@ -1,7 +1,7 @@
 import { forwardRef } from "react";
 import { cn } from "@/lib/utils";
 
-type Variant = "primary" | "secondary" | "ghost" | "danger";
+type Variant = "primary" | "cta" | "secondary" | "ghost" | "danger";
 type Size = "sm" | "md" | "lg";
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -12,17 +12,19 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 const variantStyles: Record<Variant, string> = {
   primary:
-    "bg-gold text-bg-base font-semibold hover:bg-gold-light active:bg-gold-dark",
+    "bg-gold text-white font-semibold hover:bg-gold-light active:bg-gold-dark",
+  cta:
+    "bg-cta text-white font-bold hover:bg-cta-light active:bg-cta-dark shadow-lg shadow-cta/20",
   secondary:
     "bg-bg-elevated border border-border text-text-primary hover:border-gold/50 hover:text-gold",
   ghost: "text-text-secondary hover:text-text-primary hover:bg-bg-elevated",
-  danger: "bg-red-900/40 border border-red-700/50 text-red-400 hover:bg-red-900/70",
+  danger: "bg-red-50 border border-red-200 text-red-600 hover:bg-red-100",
 };
 
 const sizeStyles: Record<Size, string> = {
-  sm: "h-8 px-3 text-sm rounded-md gap-1.5",
-  md: "h-10 px-4 text-sm rounded-lg gap-2",
-  lg: "h-12 px-6 text-base rounded-xl gap-2",
+  sm: "h-8 px-3 text-sm rounded-lg gap-1.5",
+  md: "h-10 px-4 text-sm rounded-xl gap-2",
+  lg: "h-12 px-6 text-base rounded-2xl gap-2",
 };
 
 export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
@@ -42,8 +44,8 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
       ref={ref}
       disabled={disabled || loading}
       className={cn(
-        "inline-flex items-center justify-center font-medium transition-colors",
-        "disabled:opacity-50 disabled:cursor-not-allowed",
+        "inline-flex items-center justify-center font-medium transition-all cursor-pointer",
+        "disabled:opacity-40 disabled:cursor-not-allowed",
         variantStyles[variant],
         sizeStyles[size],
         className

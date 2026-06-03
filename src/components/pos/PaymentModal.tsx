@@ -78,9 +78,9 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
     <Modal open title="Cobro" onClose={onClose} size="sm">
       <div className="flex flex-col gap-5">
         {/* Total */}
-        <div className="text-center py-3 bg-gold/5 border border-gold/20 rounded-xl">
+        <div className="text-center py-4 bg-cta/5 border border-cta/20 rounded-2xl">
           <p className="text-xs text-text-secondary mb-1">Total a cobrar</p>
-          <p className="text-3xl font-bold text-gold">{formatCurrency(total)}</p>
+          <p className="text-3xl font-bold text-cta">{formatCurrency(total)}</p>
         </div>
 
         {/* Payment entries */}
@@ -92,7 +92,7 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
                 onChange={(e) =>
                   updatePayment(i, { method: e.target.value as PaymentMethod })
                 }
-                className="flex-1 h-10 bg-bg-elevated border border-border rounded-lg px-3 text-sm text-text-primary focus:outline-none focus:border-gold/60"
+                className="flex-1 h-10 bg-bg-elevated border border-border rounded-xl px-3 text-sm text-text-primary focus:outline-none focus:border-cta/50 focus:ring-1 focus:ring-cta/20"
               >
                 {METHODS.map((m) => (
                   <option key={m.value} value={m.value}>
@@ -111,7 +111,7 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
                     updatePayment(i, { amount: parseFloat(e.target.value) || 0 });
                   }
                 }}
-                className="w-28 h-10 bg-bg-elevated border border-border rounded-lg px-3 text-sm text-text-primary focus:outline-none focus:border-gold/60"
+                className="w-28 h-10 bg-bg-elevated border border-border rounded-xl px-3 text-sm text-text-primary focus:outline-none focus:border-cta/50 focus:ring-1 focus:ring-cta/20"
               />
               {payments.length > 1 && (
                 <button
@@ -145,9 +145,9 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
 
         {/* Cash change */}
         {isCashOnly && parseFloat(cashGiven) >= total && (
-          <div className="flex justify-between items-center bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-4 py-3">
-            <span className="text-sm text-emerald-400 font-medium">Cambio</span>
-            <span className="text-lg font-bold text-emerald-400">
+          <div className="flex justify-between items-center bg-emerald-50 border border-emerald-200 rounded-2xl px-4 py-3">
+            <span className="text-sm text-emerald-700 font-medium">Cambio</span>
+            <span className="text-lg font-bold text-emerald-700">
               {formatCurrency(cashChange)}
             </span>
           </div>
@@ -157,7 +157,7 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
         {payments.length < 3 && (
           <button
             onClick={addPayment}
-            className="flex items-center gap-2 text-sm text-text-secondary hover:text-gold transition-colors"
+            className="flex items-center gap-2 text-sm text-text-secondary hover:text-cta transition-colors cursor-pointer"
           >
             <Plus size={14} />
             Agregar método de pago
@@ -169,6 +169,7 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
             Cancelar
           </Button>
           <Button
+            variant="cta"
             className="flex-1"
             disabled={!canConfirm}
             loading={loading}

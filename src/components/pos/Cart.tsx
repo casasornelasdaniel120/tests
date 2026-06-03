@@ -51,24 +51,22 @@ export function Cart({
   }
 
   return (
-    <div className="w-80 shrink-0 bg-bg-surface border-l border-border flex flex-col h-full">
+    <div className="w-80 shrink-0 bg-bg-surface border-l border-border flex flex-col h-full shadow-sm">
       {/* Header */}
       <div className="px-5 py-4 border-b border-border flex items-center justify-between">
         <div className="flex items-center gap-2 text-text-primary font-semibold">
           <ShoppingCart size={18} className="text-gold" />
           Carrito
           {cart.length > 0 && (
-            <span className="ml-1 bg-gold/20 text-gold text-xs px-2 py-0.5 rounded-full">
+            <span className="ml-1 bg-gold/10 text-gold text-xs px-2 py-0.5 rounded-full border border-gold/20">
               {cart.length}
             </span>
           )}
         </div>
         {cart.length > 0 && (
           <button
-            onClick={() => {
-              cart.forEach((i) => onRemoveItem(i.productId));
-            }}
-            className="text-text-secondary hover:text-red-400 transition-colors"
+            onClick={() => cart.forEach((i) => onRemoveItem(i.productId))}
+            className="text-text-secondary hover:text-red-500 transition-colors cursor-pointer"
             title="Vaciar carrito"
           >
             <Trash2 size={16} />
@@ -79,14 +77,14 @@ export function Cart({
       {/* Client */}
       <div className="px-4 py-3 border-b border-border">
         {selectedClient ? (
-          <div className="flex items-center justify-between bg-bg-elevated rounded-lg px-3 py-2">
+          <div className="flex items-center justify-between bg-gold/5 border border-gold/20 rounded-xl px-3 py-2">
             <div className="flex items-center gap-2">
               <User size={14} className="text-gold" />
-              <span className="text-sm text-text-primary">{selectedClient.name}</span>
+              <span className="text-sm text-text-primary font-medium">{selectedClient.name}</span>
             </div>
             <button
               onClick={() => onSelectClient(null)}
-              className="text-text-secondary hover:text-text-primary"
+              className="text-text-secondary hover:text-text-primary cursor-pointer"
             >
               <X size={14} />
             </button>
@@ -94,7 +92,7 @@ export function Cart({
         ) : (
           <button
             onClick={() => setClientSearchOpen(true)}
-            className="flex items-center gap-2 w-full text-sm text-text-secondary hover:text-gold transition-colors py-1"
+            className="flex items-center gap-2 w-full text-sm text-text-secondary hover:text-gold transition-colors py-1 cursor-pointer"
           >
             <User size={14} />
             Agregar cliente (opcional)
@@ -105,8 +103,10 @@ export function Cart({
       {/* Items */}
       <div className="flex-1 overflow-y-auto px-4 py-3 flex flex-col gap-2">
         {cart.length === 0 ? (
-          <div className="flex flex-col items-center justify-center h-full text-text-secondary text-sm gap-2">
-            <ShoppingCart size={32} className="opacity-20" />
+          <div className="flex flex-col items-center justify-center h-full text-text-secondary text-sm gap-3">
+            <div className="w-14 h-14 rounded-2xl bg-bg-elevated border border-border flex items-center justify-center">
+              <ShoppingCart size={24} className="opacity-30" />
+            </div>
             <p>El carrito está vacío</p>
           </div>
         ) : (
@@ -125,16 +125,15 @@ export function Cart({
       <div className="px-4 py-4 border-t border-border flex flex-col gap-3">
         {/* Global discount */}
         <div className="flex gap-1.5">
-          {/* Type toggle */}
-          <div className="flex rounded-lg overflow-hidden border border-border shrink-0">
+          <div className="flex rounded-xl overflow-hidden border border-border shrink-0">
             {(["$", "%"] as const).map((t) => (
               <button
                 key={t}
                 type="button"
                 onClick={() => setDiscountType(t)}
-                className={`w-8 h-8 text-xs font-semibold transition-colors ${
+                className={`w-8 h-8 text-xs font-semibold transition-colors cursor-pointer ${
                   discountType === t
-                    ? "bg-gold/20 text-gold"
+                    ? "bg-gold/10 text-gold"
                     : "text-text-secondary hover:text-text-primary"
                 }`}
               >
@@ -150,35 +149,36 @@ export function Cart({
             onChange={(e) => setDiscountInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applyGlobalDiscount()}
             placeholder={discountType === "%" ? "Desc. %" : "Desc. $"}
-            className="flex-1 h-8 bg-bg-elevated border border-border rounded-lg px-3 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-gold/60"
+            className="flex-1 h-8 bg-bg-elevated border border-border rounded-xl px-3 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/20"
           />
           <button
             onClick={applyGlobalDiscount}
-            className="px-3 h-8 text-xs bg-bg-elevated border border-border rounded-lg text-text-secondary hover:text-gold hover:border-gold/40 transition-colors shrink-0"
+            className="px-3 h-8 text-xs bg-bg-elevated border border-border rounded-xl text-text-secondary hover:text-gold hover:border-gold/40 transition-colors shrink-0 cursor-pointer"
           >
             Aplicar
           </button>
         </div>
 
         {/* Totals */}
-        <div className="flex flex-col gap-1 text-sm">
+        <div className="flex flex-col gap-1 text-sm bg-bg-elevated rounded-2xl px-4 py-3">
           <div className="flex justify-between text-text-secondary">
             <span>Subtotal</span>
             <span>{formatCurrency(subtotal)}</span>
           </div>
           {(itemDiscounts + globalDiscount) > 0 && (
-            <div className="flex justify-between text-emerald-400">
+            <div className="flex justify-between text-emerald-600">
               <span>Descuento</span>
               <span>−{formatCurrency(itemDiscounts + globalDiscount)}</span>
             </div>
           )}
-          <div className="flex justify-between text-text-primary font-bold text-base pt-2 border-t border-border">
+          <div className="flex justify-between text-text-primary font-bold text-base pt-2 border-t border-border mt-1">
             <span>Total</span>
             <span className="text-gold">{formatCurrency(total)}</span>
           </div>
         </div>
 
         <Button
+          variant="cta"
           size="lg"
           className="w-full"
           disabled={cart.length === 0}

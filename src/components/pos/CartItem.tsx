@@ -41,7 +41,7 @@ export function CartItem({ item, onUpdate, onRemove }: CartItemProps) {
       : null;
 
   return (
-    <div className="bg-bg-elevated border border-border rounded-xl p-3 flex flex-col gap-2">
+    <div className="bg-bg-surface border border-border rounded-2xl p-3 flex flex-col gap-2 shadow-sm">
       {/* Name + delete */}
       <div className="flex items-start justify-between gap-2">
         <p className="text-sm font-medium text-text-primary leading-tight flex-1">
@@ -49,7 +49,7 @@ export function CartItem({ item, onUpdate, onRemove }: CartItemProps) {
         </p>
         <button
           onClick={onRemove}
-          className="text-text-secondary hover:text-red-400 transition-colors shrink-0"
+          className="text-text-secondary hover:text-red-500 transition-colors shrink-0 cursor-pointer"
         >
           <Trash2 size={14} />
         </button>
@@ -60,16 +60,16 @@ export function CartItem({ item, onUpdate, onRemove }: CartItemProps) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => item.quantity > 1 && onUpdate({ quantity: item.quantity - 1 })}
-            className="w-6 h-6 rounded-md bg-bg-surface border border-border flex items-center justify-center text-text-secondary hover:text-gold hover:border-gold/40 transition-colors"
+            className="w-6 h-6 rounded-lg bg-bg-elevated border border-border flex items-center justify-center text-text-secondary hover:text-gold hover:border-gold/40 transition-colors cursor-pointer"
           >
             <Minus size={12} />
           </button>
-          <span className="text-sm font-medium text-text-primary w-5 text-center">
+          <span className="text-sm font-semibold text-text-primary w-5 text-center">
             {item.quantity}
           </span>
           <button
             onClick={() => onUpdate({ quantity: item.quantity + 1 })}
-            className="w-6 h-6 rounded-md bg-bg-surface border border-border flex items-center justify-center text-text-secondary hover:text-gold hover:border-gold/40 transition-colors"
+            className="w-6 h-6 rounded-lg bg-bg-elevated border border-border flex items-center justify-center text-text-secondary hover:text-gold hover:border-gold/40 transition-colors cursor-pointer"
           >
             <Plus size={12} />
           </button>
@@ -77,23 +77,22 @@ export function CartItem({ item, onUpdate, onRemove }: CartItemProps) {
         <div className="text-right">
           <span className="text-sm font-semibold text-gold">{formatCurrency(item.subtotal)}</span>
           {discountLabel && (
-            <p className="text-xs text-emerald-400">{discountLabel}</p>
+            <p className="text-xs text-emerald-600">{discountLabel}</p>
           )}
         </div>
       </div>
 
-      {/* Discount row: type toggle + input + unit price */}
+      {/* Discount row */}
       <div className="flex gap-1.5 items-center">
-        {/* Toggle $ / % */}
-        <div className="flex rounded-md overflow-hidden border border-border shrink-0">
+        <div className="flex rounded-lg overflow-hidden border border-border shrink-0">
           {(["$", "%"] as const).map((t) => (
             <button
               key={t}
               type="button"
               onClick={() => handleTypeToggle(t)}
-              className={`w-7 h-7 text-xs font-medium transition-colors ${
+              className={`w-7 h-7 text-xs font-medium transition-colors cursor-pointer ${
                 discountType === t
-                  ? "bg-gold/20 text-gold"
+                  ? "bg-gold/10 text-gold"
                   : "text-text-secondary hover:text-text-primary"
               }`}
             >
@@ -108,7 +107,7 @@ export function CartItem({ item, onUpdate, onRemove }: CartItemProps) {
           placeholder={discountType === "%" ? "0%" : "0.00"}
           value={discountInput}
           onChange={(e) => handleDiscountChange(e.target.value)}
-          className="flex-1 h-7 bg-bg-surface border border-border rounded-md px-2 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-gold/60"
+          className="flex-1 h-7 bg-bg-elevated border border-border rounded-lg px-2 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-gold/60"
         />
         <span className="text-xs text-text-secondary shrink-0">
           {formatCurrency(item.unitPrice)}/u

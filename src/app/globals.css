@@ -1,16 +1,20 @@
 @import "tailwindcss";
 
 :root {
-  --bg-base: #0f0f13;
-  --bg-surface: #1a1a24;
-  --bg-elevated: #22222e;
-  --border: #2e2e3e;
-  --gold: #c9a84c;
-  --gold-light: #e8c97a;
-  --gold-dark: #9a7a32;
-  --rose: #d4a0a0;
-  --text-primary: #f0ede8;
-  --text-secondary: #8b8a9e;
+  /* Light Minimalist — Organic Biophilic */
+  --bg-base: #f0fdf4;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f8fafc;
+  --border: #e2efe7;
+  --gold: #15803d;
+  --gold-light: #16a34a;
+  --gold-dark: #166534;
+  --cta: #2563eb;
+  --cta-light: #3b82f6;
+  --cta-dark: #1d4ed8;
+  --rose: #f43f5e;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
 }
 
 @theme inline {
@@ -21,10 +25,13 @@
   --color-gold: var(--gold);
   --color-gold-light: var(--gold-light);
   --color-gold-dark: var(--gold-dark);
+  --color-cta: var(--cta);
+  --color-cta-light: var(--cta-light);
+  --color-cta-dark: var(--cta-dark);
   --color-rose: var(--rose);
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
-  --font-sans: var(--font-dm-sans);
+  --font-sans: var(--font-inter);
 }
 
 * {
@@ -39,7 +46,7 @@ body {
 body {
   background-color: var(--bg-base);
   color: var(--text-primary);
-  font-family: var(--font-dm-sans), "DM Sans", sans-serif;
+  font-family: var(--font-inter), "Inter", sans-serif;
   -webkit-font-smoothing: antialiased;
 }
 
