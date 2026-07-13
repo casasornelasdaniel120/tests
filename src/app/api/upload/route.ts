@@ -1,18 +1,10 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { createClient } from "@supabase/supabase-js";
+import { getSupabaseAdmin, toPublicUrl } from "@/lib/supabase-admin";
 
 const ALLOWED_TYPES = ["image/jpeg", "image/png", "image/webp", "image/gif"];
 const MAX_SIZE = 5 * 1024 * 1024;
 const BUCKET = "productos";
-
-function getAdminClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { persistSession: false } }
-  );
-}
 
 export async function POST(req: Request) {
   const session = await auth();
@@ -37,7 +29,7 @@ export async function POST(req: Request) {
   const filename = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
   const buffer = Buffer.from(await file.arrayBuffer());
 
-  const supabase = getAdminClient();
+  const supabase = getSupabaseAdmin();
   const { error } = await supabase.storage
     .from(BUCKET)
     .upload(filename, buffer, { contentType: file.type, upsert: false });
@@ -47,5 +39,5 @@ export async function POST(req: Request) {
   }
 
   const { data } = supabase.storage.from(BUCKET).getPublicUrl(filename);
-  return NextResponse.json({ url: data.publicUrl }, { status: 201 });
+  return NextResponse.json({ url: toPublicUrl(data.publicUrl) }, { status: 201 });
 }

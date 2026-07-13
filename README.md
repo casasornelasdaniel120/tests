@@ -1,36 +1,83 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# POS App — FotoStudio
 
-## Getting Started
+Punto de venta (Next.js 16 + NextAuth v5 + Prisma + Supabase) con entorno de
+desarrollo 100 % local sobre Docker.
 
-First, run the development server:
+## Requisitos
+
+- Docker Desktop (o Docker Engine + Compose)
+- Node.js ≥ 20
+
+## Arranque rápido (todo en Docker)
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install                 # instala deps (incluye la CLI de Supabase)
+
+# 1. Levanta el stack local de Supabase (Postgres, API, Storage, Studio)
+npm run supabase:start
+
+# 2. Aplica migraciones y datos demo (solo la primera vez o tras un reset)
+npx prisma migrate deploy
+npm run db:seed
+
+# 3. Construye y levanta la app en Docker
+npm run docker:up
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- App: http://localhost:3000
+- Supabase API: http://localhost:54321
+- Supabase Studio: http://localhost:54323
+- Postgres local: `postgresql://postgres:postgres@127.0.0.1:54322/postgres`
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Credenciales demo:
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+| Rol | Email | Password |
+|-----|-------|----------|
+| Admin | admin@fotostudio.mx | admin123 |
+| Cajero | cajero@fotostudio.mx | cajero123 |
+| Editor | editor@fotostudio.mx | editor123 |
 
-## Learn More
+## Variables de entorno
 
-To learn more about Next.js, take a look at the following resources:
+- `.env` — desarrollo en el host (`npm run dev`, comandos de Prisma). Apunta a
+  `127.0.0.1:54321/54322`.
+- `.env.docker` — la app dentro de Docker. Usa `host.docker.internal` para
+  llegar al Supabase local; `NEXT_PUBLIC_SUPABASE_URL` sigue siendo
+  `http://localhost:54321` porque es la URL que ve el navegador.
+- `.env.docker.example` — plantilla versionada; copia a `.env.docker` y genera
+  tu `NEXTAUTH_SECRET`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+Las llaves (`SUPABASE_SERVICE_ROLE_KEY`, etc.) son las llaves demo compartidas
+de la CLI de Supabase — solo sirven en local, no usar en producción.
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Comandos útiles
 
-## Deploy on Vercel
+```bash
+npm run dev              # dev server en el host (usa .env)
+npm run docker:up        # build + up de la app en Docker
+npm run docker:logs      # logs del contenedor
+npm run docker:down      # detener la app
+npm run supabase:stop    # detener el stack de Supabase
+npm run supabase:status  # URLs y llaves del stack local
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+npm run db:migrate       # nueva migración (dev)
+npm run db:seed          # datos demo
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+> Nota: el login se valida contra **Supabase Auth**. Los usuarios demo se dan
+> de alta ahí con el seed. Si creas un usuario en Studio → Authentication
+> (con "Auto Confirm" activado), podrá entrar a la app: en su primer login se
+> le crea el perfil con rol de `user_metadata.role` o CAJERO por defecto.
+
+## Notas de arquitectura
+
+- Prisma define el esquema y las migraciones; en runtime todas las consultas
+  van por el cliente de Supabase (`getSupabaseAdmin()` en
+  `src/lib/supabase-admin.ts`).
+- La migración `20260713000000_grant_supabase_data_api` otorga permisos a
+  `service_role` sobre las tablas de `public` (la CLI de Supabase ya no expone
+  automáticamente tablas creadas por `postgres`).
+- El bucket de Storage `productos` se crea automáticamente al hacer
+  `supabase start` (declarado en `supabase/config.toml`).
+- Dentro de Docker, el servidor usa `SUPABASE_URL` (interna) y las URLs
+  públicas de Storage se re-escriben con `toPublicUrl()`.

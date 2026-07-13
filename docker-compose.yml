@@ -1,0 +1,17 @@
+# La app Next.js. El stack de Supabase local (grupo "pos-app" en Docker
+# Desktop) se levanta aparte con `npm run supabase:start`.
+name: pos-app-web
+
+services:
+  app:
+    build: .
+    container_name: pos-app
+    ports:
+      - "3000:3000"
+    env_file:
+      - .env.docker
+    extra_hosts:
+      # En Docker Desktop (Mac/Windows) ya existe; esta línea lo habilita
+      # también en Linux para alcanzar el stack de Supabase local del host.
+      - "host.docker.internal:host-gateway"
+    restart: unless-stopped

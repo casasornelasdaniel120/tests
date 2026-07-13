@@ -1,46 +1,50 @@
+import "dotenv/config";
 import { PrismaClient, Role, PaymentMethod } from "@prisma/client";
-import bcrypt from "bcryptjs";
+import { createClient } from "@supabase/supabase-js";
 
 const prisma = new PrismaClient();
 
+const DEMO_USERS = [
+  { name: "Ana García", email: "admin@fotostudio.mx", password: "admin123", role: Role.ADMIN },
+  { name: "Luis Martínez", email: "cajero@fotostudio.mx", password: "cajero123", role: Role.CAJERO },
+  { name: "Sofía Ruiz", email: "editor@fotostudio.mx", password: "editor123", role: Role.EDITOR },
+];
+
+// Las credenciales viven en Supabase Auth; la tabla User solo guarda perfil/rol
+async function seedAuthUsers() {
+  const supabase = createClient(
+    process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { persistSession: false } }
+  );
+
+  for (const u of DEMO_USERS) {
+    const { error } = await supabase.auth.admin.createUser({
+      email: u.email,
+      password: u.password,
+      email_confirm: true,
+      user_metadata: { name: u.name, role: u.role },
+    });
+    if (error && !/already.*(registered|exists)/i.test(error.message)) {
+      throw new Error(`Auth user ${u.email}: ${error.message}`);
+    }
+  }
+}
+
 async function main() {
-  // Users
-  const hash = (pw: string) => bcrypt.hash(pw, 10);
+  await seedAuthUsers();
 
-  const [admin, cajero, editor] = await Promise.all([
-    prisma.user.upsert({
-      where: { email: "admin@fotostudio.mx" },
-      update: {},
-      create: {
-        name: "Ana García",
-        email: "admin@fotostudio.mx",
-        password: await hash("admin123"),
-        role: Role.ADMIN,
-      },
-    }),
-    prisma.user.upsert({
-      where: { email: "cajero@fotostudio.mx" },
-      update: {},
-      create: {
-        name: "Luis Martínez",
-        email: "cajero@fotostudio.mx",
-        password: await hash("cajero123"),
-        role: Role.CAJERO,
-      },
-    }),
-    prisma.user.upsert({
-      where: { email: "editor@fotostudio.mx" },
-      update: {},
-      create: {
-        name: "Sofía Ruiz",
-        email: "editor@fotostudio.mx",
-        password: await hash("editor123"),
-        role: Role.EDITOR,
-      },
-    }),
-  ]);
+  const [admin, cajero, editor] = await Promise.all(
+    DEMO_USERS.map((u) =>
+      prisma.user.upsert({
+        where: { email: u.email },
+        update: {},
+        create: { name: u.name, email: u.email, role: u.role },
+      })
+    )
+  );
 
-  console.log("✓ Usuarios creados");
+  console.log("✓ Usuarios creados (Supabase Auth + perfil)");
 
   // Products
   const products = await Promise.all([

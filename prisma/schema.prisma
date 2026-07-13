@@ -24,7 +24,8 @@ model User {
   id        String   @id @default(cuid())
   name      String
   email     String   @unique
-  password  String
+  // Legado: las credenciales ahora viven en Supabase Auth (auth.users)
+  password  String?
   role      Role     @default(CAJERO)
   active    Boolean  @default(true)
   createdAt DateTime @default(now())

@@ -15,7 +15,15 @@ npm run db:generate  # Regenerate Prisma client after schema changes
 npm run db:migrate   # Apply schema migrations (dev)
 npm run db:seed      # Seed database with demo data
 npm run db:studio    # Open Prisma Studio GUI
+
+npm run supabase:start   # Local Supabase stack in Docker (API :54321, DB :54322, Studio :54323)
+npm run supabase:stop    # Stop the local Supabase stack
+npm run docker:up        # Build + run the app container (docker compose)
+npm run docker:down      # Stop the app container
 ```
+
+### Local development
+The full stack runs locally: `supabase start` brings up Postgres/API/Storage in Docker (bucket `productos` is declared in `supabase/config.toml`), then `prisma migrate deploy` + `db:seed` populate it. `.env` targets the local stack from the host; `.env.docker` is used by the app container (reaches Supabase via `host.docker.internal`, while `NEXT_PUBLIC_SUPABASE_URL` stays `http://localhost:54321` for browser-facing URLs — `toPublicUrl()` in `src/lib/supabase-admin.ts` rewrites storage URLs). The Prisma migration `20260713000000_grant_supabase_data_api` grants `service_role` access to Prisma-created tables (the Supabase CLI no longer auto-exposes them).
 
 No test suite is configured. Playwright is installed as a dev dependency but has no test files yet.
 
@@ -23,7 +31,7 @@ No test suite is configured. Playwright is installed as a dev dependency but has
 
 ### Stack
 - **Next.js 16** (App Router) — see `node_modules/next/dist/docs/` for API specifics; this version has breaking changes from prior releases
-- **NextAuth v5 beta** (`next-auth@^5.0.0-beta.31`) — credentials-only auth with JWT sessions
+- **NextAuth v5 beta** (`next-auth@^5.0.0-beta.31`) — JWT sessions; credentials are verified against **Supabase Auth** (`signInWithPassword`)
 - **Prisma 6** — schema definition and migrations only; **not used for runtime queries**
 - **Supabase JS client** — all runtime database reads/writes go through `getSupabaseAdmin()` using the service role key
 - **Tailwind CSS v4** — configured via PostCSS; custom design tokens in `globals.css`
@@ -36,6 +44,8 @@ When adding new queries: use `getSupabaseAdmin()`, not `prisma`. When changing t
 
 ### Auth & Role Guard
 `src/lib/auth.ts` exports `{ handlers, signIn, signOut, auth }` from NextAuth. The `auth()` function is the primary way to get the session in Server Components and Route Handlers.
+
+Credentials live in **Supabase Auth** (`auth.users`): `authorize()` calls `supabase.auth.signInWithPassword`, then loads the profile/role from the `User` table by email. Users that exist only in Supabase Auth (e.g. created in Studio) are auto-provisioned into `User` on first login (role from `user_metadata.role`, default CAJERO). The users API (`/api/users`) creates/updates/deletes in Supabase Auth via `auth.admin.*`; `User.password` is legacy and nullable.
 
 Three roles (defined in Prisma enum `Role`):
 
