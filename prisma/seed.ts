@@ -5,9 +5,10 @@ import { createClient } from "@supabase/supabase-js";
 const prisma = new PrismaClient();
 
 const DEMO_USERS = [
-  { name: "Ana García", email: "admin@fotostudio.mx", password: "admin123", role: Role.ADMIN },
-  { name: "Luis Martínez", email: "cajero@fotostudio.mx", password: "cajero123", role: Role.CAJERO },
-  { name: "Sofía Ruiz", email: "editor@fotostudio.mx", password: "editor123", role: Role.EDITOR },
+  { name: "Ana García", email: "admin@fotostudio.mx", password: "admin123", role: Role.ADMIN, commissionPct: 0 },
+  { name: "Luis Martínez", email: "cajero@fotostudio.mx", password: "cajero123", role: Role.CAJERO, commissionPct: 0 },
+  { name: "Sofía Ruiz", email: "editor@fotostudio.mx", password: "editor123", role: Role.EDITOR, commissionPct: 0 },
+  { name: "Dr. Ramón García", email: "dr.garcia@dental.mx", password: "doctor123", role: Role.AFILIADO, commissionPct: 10 },
 ];
 
 // Las credenciales viven en Supabase Auth; la tabla User solo guarda perfil/rol
@@ -39,12 +40,21 @@ async function main() {
       prisma.user.upsert({
         where: { email: u.email },
         update: {},
-        create: { name: u.name, email: u.email, role: u.role },
+        create: { name: u.name, email: u.email, role: u.role, commissionPct: u.commissionPct },
       })
     )
   );
 
   console.log("✓ Usuarios creados (Supabase Auth + perfil)");
+
+  // Categories
+  const CATEGORIES = ["Retrato", "Corporativo", "Quinceañera", "Familia", "Bebé", "Otro"];
+  await prisma.category.createMany({
+    data: CATEGORIES.map((name) => ({ name })),
+    skipDuplicates: true,
+  });
+
+  console.log("✓ Categorías creadas");
 
   // Products
   const products = await Promise.all([

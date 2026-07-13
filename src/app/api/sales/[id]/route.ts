@@ -9,7 +9,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const { data, error } = await getSupabaseAdmin()
     .from("Sale")
-    .select(`*, user:User(id,name), client:Client(id,name,phone,email), items:SaleItem(*,product:Product(id,name,image)), payments:SalePayment(*)`)
+    .select(`*, user:User!Sale_userId_fkey(id,name), affiliate:User!Sale_affiliateId_fkey(id,name), client:Client(id,name,phone,email), items:SaleItem(*,product:Product(id,name,image)), payments:SalePayment(*)`)
     .eq("id", id)
     .single();
 

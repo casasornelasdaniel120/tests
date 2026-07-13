@@ -1,13 +1,14 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { Search, Plus, Pencil, Trash2 } from "lucide-react";
+import { Search, Plus, Pencil, Trash2, Tags } from "lucide-react";
 import Image from "next/image";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
 import { Modal } from "@/components/ui/Modal";
 import { ProductForm } from "./ProductForm";
+import { CategoryManager } from "./CategoryManager";
 import { formatCurrency } from "@/lib/utils";
 
 interface Product {
@@ -25,6 +26,7 @@ export function ProductList() {
   const [search, setSearch] = useState("");
   const [formOpen, setFormOpen] = useState(false);
   const [editing, setEditing] = useState<Product | null>(null);
+  const [categoriesOpen, setCategoriesOpen] = useState(false);
 
   const load = useCallback(() => {
     fetch(`/api/products?search=${encodeURIComponent(search)}`)
@@ -57,11 +59,17 @@ export function ProductList() {
     <div className="p-4 sm:p-6 md:p-8">
       <div className="flex items-center justify-between mb-6">
         <h1 className="text-xl sm:text-2xl font-bold text-text-primary">Productos</h1>
-        <Button onClick={openCreate}>
-          <Plus size={16} />
-          <span className="hidden sm:inline">Nuevo producto</span>
-          <span className="sm:hidden">Nuevo</span>
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button variant="secondary" onClick={() => setCategoriesOpen(true)}>
+            <Tags size={16} />
+            <span className="hidden sm:inline">Categorías</span>
+          </Button>
+          <Button onClick={openCreate}>
+            <Plus size={16} />
+            <span className="hidden sm:inline">Nuevo producto</span>
+            <span className="sm:hidden">Nuevo</span>
+          </Button>
+        </div>
       </div>
 
       <Input
@@ -140,6 +148,14 @@ export function ProductList() {
           </div>
         )}
       </div>
+
+      <Modal
+        open={categoriesOpen}
+        onClose={() => setCategoriesOpen(false)}
+        title="Categorías de productos"
+      >
+        <CategoryManager onChanged={load} />
+      </Modal>
 
       <Modal
         open={formOpen}

@@ -9,6 +9,7 @@ const ROLES: { value: Role; label: string }[] = [
   { value: "ADMIN", label: "Administrador" },
   { value: "CAJERO", label: "Cajero" },
   { value: "EDITOR", label: "Editor" },
+  { value: "AFILIADO", label: "Afiliado (doctor)" },
 ];
 
 interface UserData {

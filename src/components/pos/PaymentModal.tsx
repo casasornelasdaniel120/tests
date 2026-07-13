@@ -1,7 +1,7 @@
 "use client";
 
-import { useState } from "react";
-import { Plus, Trash2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { Plus, Trash2, Stethoscope } from "lucide-react";
 import { Modal } from "@/components/ui/Modal";
 import { Button } from "@/components/ui/Button";
 import { Badge } from "@/components/ui/Badge";
@@ -17,7 +17,7 @@ const METHODS: { value: PaymentMethod; label: string }[] = [
 interface PaymentModalProps {
   total: number;
   onClose: () => void;
-  onConfirm: (payments: PaymentEntry[]) => Promise<void>;
+  onConfirm: (payments: PaymentEntry[], affiliateId?: string) => Promise<void>;
 }
 
 export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
@@ -26,6 +26,14 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
   ]);
   const [cashGiven, setCashGiven] = useState(total.toString());
   const [loading, setLoading] = useState(false);
+  const [affiliates, setAffiliates] = useState<{ id: string; name: string }[]>([]);
+  const [affiliateId, setAffiliateId] = useState("");
+
+  useEffect(() => {
+    fetch("/api/affiliates?light=1")
+      .then((r) => (r.ok ? r.json() : []))
+      .then((data: { id: string; name: string }[]) => setAffiliates(data));
+  }, []);
 
   const totalPaid = payments.reduce((a, p) => a + p.amount, 0);
   const remaining = total - totalPaid;
@@ -66,7 +74,7 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
     if (Math.abs(totalPaid - total) > 0.01 && !isCashOnly) return;
 
     setLoading(true);
-    await onConfirm(finalPayments);
+    await onConfirm(finalPayments, affiliateId || undefined);
     setLoading(false);
   }
 
@@ -150,6 +158,28 @@ export function PaymentModal({ total, onClose, onConfirm }: PaymentModalProps) {
             <span className="text-lg font-bold text-emerald-700">
               {formatCurrency(cashChange)}
             </span>
+          </div>
+        )}
+
+        {/* Referido por doctor afiliado */}
+        {affiliates.length > 0 && (
+          <div className="flex flex-col gap-1.5">
+            <label className="flex items-center gap-1.5 text-xs text-text-secondary">
+              <Stethoscope size={13} />
+              ¿Viene de parte de un doctor?
+            </label>
+            <select
+              value={affiliateId}
+              onChange={(e) => setAffiliateId(e.target.value)}
+              className="h-10 bg-bg-elevated border border-border rounded-xl px-3 text-sm text-text-primary focus:outline-none focus:border-cta/50 focus:ring-1 focus:ring-cta/20"
+            >
+              <option value="">No / Sin referencia</option>
+              {affiliates.map((a) => (
+                <option key={a.id} value={a.id}>
+                  {a.name}
+                </option>
+              ))}
+            </select>
           </div>
         )}
 

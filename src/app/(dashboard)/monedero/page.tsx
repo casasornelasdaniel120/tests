@@ -1,13 +1,13 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { homeFor } from "@/lib/roles";
-import { ClientList } from "@/components/clients/ClientList";
+import { WalletDashboard } from "@/components/wallet/WalletDashboard";
 
-export default async function ClientesPage() {
+export default async function MonederoPage() {
   const session = await auth();
   if (!session) redirect("/login");
-  if (!["ADMIN", "EDITOR"].includes(session.user.role)) {
+  if (session.user.role !== "AFILIADO") {
     redirect(homeFor(session.user.role));
   }
-  return <ClientList />;
+  return <WalletDashboard userName={session.user.name ?? ""} />;
 }

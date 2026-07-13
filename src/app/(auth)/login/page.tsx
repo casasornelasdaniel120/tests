@@ -1,11 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { signIn } from "next-auth/react";
+import { signIn, getSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { Camera } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
+
+const HOME_BY_ROLE: Record<string, string> = {
+  ADMIN: "/pos",
+  CAJERO: "/pos",
+  EDITOR: "/clientes",
+  AFILIADO: "/monedero",
+};
 
 export default function LoginPage() {
   const router = useRouter();
@@ -31,7 +39,8 @@ export default function LoginPage() {
         return;
       }
 
-      router.push("/pos");
+      const session = await getSession();
+      router.push(HOME_BY_ROLE[session?.user.role ?? ""] ?? "/pos");
     } catch {
       setError("Correo o contraseña incorrectos");
     } finally {
@@ -90,6 +99,12 @@ export default function LoginPage() {
 
         <p className="text-center text-xs text-text-secondary mt-6">
           Sistema interno — acceso solo para personal autorizado
+        </p>
+        <p className="text-center text-xs text-text-secondary mt-2">
+          ¿Eres dentista?{" "}
+          <Link href="/registro" className="text-cta hover:underline">
+            Únete al programa de afiliados
+          </Link>
         </p>
       </div>
     </div>

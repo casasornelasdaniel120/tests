@@ -31,6 +31,7 @@ export interface CreateSalePayload {
   total: number;
   payments: PaymentEntry[];
   notes?: string;
+  affiliateId?: string;
 }
 
 export interface SaleWithDetails {
@@ -42,6 +43,7 @@ export interface SaleWithDetails {
   notes: string | null;
   user: { id: string; name: string };
   client: { id: string; name: string; phone: string | null; email: string | null } | null;
+  affiliate?: { id: string; name: string } | null;
   items: {
     id: string;
     quantity: number;

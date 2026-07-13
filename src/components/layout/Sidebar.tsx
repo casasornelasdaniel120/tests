@@ -12,6 +12,9 @@ import {
   UserCog,
   LogOut,
   Leaf,
+  Stethoscope,
+  Wallet,
+  QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { Role } from "@prisma/client";
@@ -28,7 +31,10 @@ const NAV_ITEMS: NavItem[] = [
   { href: "/clientes", label: "Clientes", icon: Users, roles: ["ADMIN", "EDITOR"] },
   { href: "/productos", label: "Productos", icon: Package, roles: ["ADMIN", "EDITOR"] },
   { href: "/caja", label: "Caja", icon: BarChart3, roles: ["ADMIN", "CAJERO"] },
+  { href: "/canje", label: "Canje", icon: QrCode, roles: ["ADMIN", "CAJERO"] },
+  { href: "/afiliados", label: "Afiliados", icon: Stethoscope, roles: ["ADMIN"] },
   { href: "/usuarios", label: "Usuarios", icon: UserCog, roles: ["ADMIN"] },
+  { href: "/monedero", label: "Mi monedero", icon: Wallet, roles: ["AFILIADO"] },
 ];
 
 interface SidebarProps {

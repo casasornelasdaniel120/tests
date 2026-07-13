@@ -1,19 +1,10 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import Image from "next/image";
 import { Upload, X } from "lucide-react";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
-
-const CATEGORIES = [
-  "Retrato",
-  "Corporativo",
-  "Quinceañera",
-  "Familia",
-  "Bebé",
-  "Otro",
-];
 
 interface ProductData {
   id?: string;
@@ -36,12 +27,23 @@ export function ProductForm({ initial, onSave, onCancel }: ProductFormProps) {
   const [description, setDescription] = useState(initial?.description ?? "");
   const [price, setPrice] = useState(initial?.price?.toString() ?? "");
   const [image, setImage] = useState(initial?.image ?? "");
-  const [category, setCategory] = useState(initial?.category ?? CATEGORIES[0]);
+  const [categories, setCategories] = useState<string[]>([]);
+  const [category, setCategory] = useState(initial?.category ?? "");
   const [active, setActive] = useState(initial?.active ?? true);
   const [loading, setLoading] = useState(false);
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState("");
   const fileRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    fetch("/api/categories")
+      .then((r) => r.json())
+      .then((data: { name: string }[]) => {
+        const names = data.map((c) => c.name);
+        setCategories(names);
+        setCategory((prev) => prev || names[0] || "");
+      });
+  }, []);
 
   async function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -107,9 +109,14 @@ export function ProductForm({ initial, onSave, onCancel }: ProductFormProps) {
           <select
             value={category}
             onChange={(e) => setCategory(e.target.value)}
+            required
             className="h-10 bg-bg-elevated border border-border rounded-lg px-3 text-sm text-text-primary focus:outline-none focus:border-gold/60"
           >
-            {CATEGORIES.map((c) => (
+            {/* Si el producto tiene una categoría que ya no está en el catálogo, se conserva como opción */}
+            {category && !categories.includes(category) && (
+              <option value={category}>{category}</option>
+            )}
+            {categories.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>

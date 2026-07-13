@@ -1,13 +1,13 @@
 import { auth } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import { homeFor } from "@/lib/roles";
-import { ClientList } from "@/components/clients/ClientList";
+import { RedeemScreen } from "@/components/wallet/RedeemScreen";
 
-export default async function ClientesPage() {
+export default async function CanjePage() {
   const session = await auth();
   if (!session) redirect("/login");
-  if (!["ADMIN", "EDITOR"].includes(session.user.role)) {
+  if (!["ADMIN", "CAJERO"].includes(session.user.role)) {
     redirect(homeFor(session.user.role));
   }
-  return <ClientList />;
+  return <RedeemScreen />;
 }

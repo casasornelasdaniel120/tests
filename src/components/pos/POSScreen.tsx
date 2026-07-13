@@ -86,9 +86,10 @@ export function POSScreen() {
   const itemDiscounts = cart.reduce((a, i) => a + i.discount, 0);
   const total = Math.max(0, subtotal - itemDiscounts - globalDiscount);
 
-  async function handleConfirmPayment(payments: PaymentEntry[]) {
+  async function handleConfirmPayment(payments: PaymentEntry[], affiliateId?: string) {
     const payload: CreateSalePayload = {
       clientId: selectedClient?.id,
+      affiliateId,
       items: cart.map((i) => ({
         productId: i.productId,
         quantity: i.quantity,

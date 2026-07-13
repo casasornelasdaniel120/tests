@@ -20,7 +20,7 @@ export async function GET(req: Request) {
   // Fetch sales with relations
   let salesQuery = supabase
     .from("Sale")
-    .select(`*, user:User(id,name), client:Client(id,name), items:SaleItem(*,product:Product(id,name)), payments:SalePayment(*)`)
+    .select(`*, user:User!Sale_userId_fkey(id,name), client:Client(id,name), items:SaleItem(*,product:Product(id,name)), payments:SalePayment(*)`)
     .gte("createdAt", start)
     .lte("createdAt", end)
     .order("createdAt", { ascending: false });
@@ -38,7 +38,7 @@ export async function GET(req: Request) {
   // Fetch unique users who worked that day
   const { data: userRows } = await supabase
     .from("Sale")
-    .select("userId, user:User(id,name)")
+    .select("userId, user:User!Sale_userId_fkey(id,name)")
     .gte("createdAt", start)
     .lte("createdAt", end);
 

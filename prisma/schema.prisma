@@ -12,6 +12,13 @@ enum Role {
   ADMIN
   CAJERO
   EDITOR
+  AFILIADO
+}
+
+enum WalletTxType {
+  COMISION
+  PAGO
+  AJUSTE
 }
 
 enum PaymentMethod {
@@ -28,11 +35,26 @@ model User {
   password  String?
   role      Role     @default(CAJERO)
   active    Boolean  @default(true)
+  // % de comisión para AFILIADO; 0 = aún no configurado por la admin
+  commissionPct Decimal @default(0) @db.Decimal(5, 2)
+  // Pase digital (Passcreator): token del QR y referencias al pase
+  walletToken String? @unique
+  passId      String?
+  passUrl     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   sales         Sale[]
   cashRegisters CashRegister[]
+  referredSales Sale[]              @relation("AffiliateSales")
+  walletTxs     WalletTransaction[]
+}
+
+model Category {
+  name      String   @id
+  createdAt DateTime @default(now())
+
+  products Product[]
 }
 
 model Product {
@@ -46,7 +68,10 @@ model Product {
   createdAt   DateTime @default(now())
   updatedAt   DateTime @updatedAt
 
-  saleItems SaleItem[]
+  // Renombrar una categoría cascadea a los productos; eliminarla se bloquea
+  // mientras tenga productos (Restrict)
+  categoryRel Category   @relation(fields: [category], references: [name], onUpdate: Cascade, onDelete: Restrict)
+  saleItems   SaleItem[]
 }
 
 model Client {
@@ -69,12 +94,31 @@ model Sale {
   discount  Decimal  @default(0) @db.Decimal(10, 2)
   total     Decimal  @db.Decimal(10, 2)
   notes     String?
+  // Doctor afiliado que refirió la venta; el % se congela en commissionAmount
+  affiliateId      String?
+  commissionAmount Decimal? @db.Decimal(10, 2)
   createdAt DateTime @default(now())
 
-  user     User          @relation(fields: [userId], references: [id])
-  client   Client?       @relation(fields: [clientId], references: [id])
-  items    SaleItem[]
-  payments SalePayment[]
+  user      User          @relation(fields: [userId], references: [id])
+  client    Client?       @relation(fields: [clientId], references: [id])
+  affiliate User?         @relation("AffiliateSales", fields: [affiliateId], references: [id])
+  items     SaleItem[]
+  payments  SalePayment[]
+  walletTxs WalletTransaction[]
+}
+
+model WalletTransaction {
+  id          String       @id @default(cuid())
+  affiliateId String
+  saleId      String?
+  type        WalletTxType
+  // Positivo = abono (comisión), negativo = cargo (pago al doctor / ajuste)
+  amount    Decimal  @db.Decimal(10, 2)
+  note      String?
+  createdAt DateTime @default(now())
+
+  affiliate User  @relation(fields: [affiliateId], references: [id])
+  sale      Sale? @relation(fields: [saleId], references: [id])
 }
 
 model SaleItem {

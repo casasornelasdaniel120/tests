@@ -69,6 +69,25 @@ npm run db:seed          # datos demo
 > (con "Auto Confirm" activado), podrá entrar a la app: en su primer login se
 > le crea el perfil con rol de `user_metadata.role` o CAJERO por defecto.
 
+### Pases digitales (Passcreator)
+
+Los doctores afiliados pueden agregar su monedero a Apple/Google Wallet y
+canjear su saldo en tienda (página **/canje**, el cajero escanea el QR del
+pase). Para activar los pases:
+
+1. Crea una cuenta en [passcreator.com](https://www.passcreator.com) y genera
+   un API key (Settings → API).
+2. Crea una plantilla de pase tipo *store card* con los campos dinámicos
+   `First Name`, `Last Name` e `ID`, usando `storedValue` para el saldo y
+   código QR con valor dinámico.
+3. Copia el API key y el UID de la plantilla a `PASSCREATOR_API_KEY` y
+   `PASSCREATOR_TEMPLATE_ID` en `.env` y `.env.docker`.
+
+La integración usa el **API v3** de Passcreator (`POST/PATCH /api/v3/pass`).
+
+Sin estas variables, el botón del pase se oculta pero el canje por código
+sigue funcionando.
+
 ## Notas de arquitectura
 
 - Prisma define el esquema y las migraciones; en runtime todas las consultas

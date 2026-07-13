@@ -21,12 +21,14 @@ const ROLE_LABEL: Record<Role, string> = {
   ADMIN: "Administrador",
   CAJERO: "Cajero",
   EDITOR: "Editor",
+  AFILIADO: "Afiliado",
 };
 
-const ROLE_BADGE: Record<Role, "gold" | "rose" | "default"> = {
+const ROLE_BADGE: Record<Role, "gold" | "rose" | "default" | "success"> = {
   ADMIN: "gold",
   CAJERO: "rose",
   EDITOR: "default",
+  AFILIADO: "success",
 };
 
 export function UserList() {

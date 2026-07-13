@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
+import { refreshAffiliatePass } from "@/lib/passcreator";
 import { createId } from "@paralleldrive/cuid2";
 import type { CreateSalePayload } from "@/types";
 
@@ -17,7 +18,7 @@ export async function GET(req: Request) {
   const supabase = getSupabaseAdmin();
   let query = supabase
     .from("Sale")
-    .select(`*, user:User(id,name), client:Client(id,name,phone,email), items:SaleItem(*,product:Product(id,name,image)), payments:SalePayment(*)`)
+    .select(`*, user:User!Sale_userId_fkey(id,name), affiliate:User!Sale_affiliateId_fkey(id,name), client:Client(id,name,phone,email), items:SaleItem(*,product:Product(id,name,image)), payments:SalePayment(*)`)
     .order("createdAt", { ascending: false });
 
   if (from) query = query.gte("createdAt", from);
@@ -47,6 +48,21 @@ export async function POST(req: Request) {
   const supabase = getSupabaseAdmin();
   const saleId = createId();
 
+  // Venta referida por un doctor afiliado: el % vigente se congela aquí
+  let commissionAmount: number | null = null;
+  if (body.affiliateId) {
+    const { data: affiliate } = await supabase
+      .from("User")
+      .select("id, commissionPct, role, active")
+      .eq("id", body.affiliateId)
+      .single();
+    if (!affiliate || affiliate.role !== "AFILIADO" || !affiliate.active) {
+      return NextResponse.json({ error: "Doctor afiliado inválido" }, { status: 400 });
+    }
+    commissionAmount =
+      Math.round(Number(body.total) * Number(affiliate.commissionPct)) / 100;
+  }
+
   // Insert sale
   const { error: saleError } = await supabase.from("Sale").insert({
     id: saleId,
@@ -56,8 +72,28 @@ export async function POST(req: Request) {
     discount: body.discount,
     total: body.total,
     notes: body.notes ?? null,
+    affiliateId: body.affiliateId ?? null,
+    commissionAmount,
   });
   if (saleError) return NextResponse.json({ error: saleError.message }, { status: 500 });
+
+  // Abono de la comisión al monedero del doctor
+  if (body.affiliateId && commissionAmount && commissionAmount > 0) {
+    const { error: txError } = await supabase.from("WalletTransaction").insert({
+      id: createId(),
+      affiliateId: body.affiliateId,
+      saleId,
+      type: "COMISION",
+      amount: commissionAmount,
+    });
+    if (txError) return NextResponse.json({ error: txError.message }, { status: 500 });
+
+    // Actualiza el saldo en el pase digital del doctor (best-effort)
+    await refreshAffiliatePass(
+      body.affiliateId,
+      `Nueva comisión: $${commissionAmount.toFixed(2)} 🎉`
+    );
+  }
 
   // Insert items and payments in parallel
   const [itemsRes, paymentsRes] = await Promise.all([
@@ -88,7 +124,7 @@ export async function POST(req: Request) {
   // Return full sale with relations
   const { data: sale } = await supabase
     .from("Sale")
-    .select(`*, user:User(id,name), client:Client(id,name,phone,email), items:SaleItem(*,product:Product(id,name,image)), payments:SalePayment(*)`)
+    .select(`*, user:User!Sale_userId_fkey(id,name), affiliate:User!Sale_affiliateId_fkey(id,name), client:Client(id,name,phone,email), items:SaleItem(*,product:Product(id,name,image)), payments:SalePayment(*)`)
     .eq("id", saleId)
     .single();
 

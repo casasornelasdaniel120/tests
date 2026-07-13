@@ -51,9 +51,12 @@ Three roles (defined in Prisma enum `Role`):
 
 | Role | Access |
 |------|--------|
-| `ADMIN` | Everything |
+| `ADMIN` | Everything (incl. `/afiliados`) |
 | `CAJERO` | POS (`/pos`), cash register (`/caja`) |
 | `EDITOR` | Clients (`/clientes`), products (`/productos`) |
+| `AFILIADO` | Only `/monedero` (affiliate dentist wallet dashboard) |
+
+`homeFor(role)` in `src/lib/roles.ts` is the canonical post-login/unauthorized-redirect target per role — use it in page guards instead of hardcoding paths.
 
 Role guards are applied at two levels:
 1. **Page level** — server components redirect unauthorized roles (e.g. `/pos/page.tsx` redirects EDITORs to `/clientes`)
@@ -73,6 +76,7 @@ src/app/
   api/
     auth/[...nextauth]/  ← NextAuth handler
     products/            ← GET (all roles), POST/PATCH/DELETE (ADMIN, EDITOR)
+    categories/          ← GET (all roles), POST/PATCH/DELETE (ADMIN, EDITOR); rename cascades to products, delete blocked while in use
     clients/             ← GET (all roles), POST/PATCH/DELETE (ADMIN, EDITOR)
     sales/               ← GET (all roles), POST (ADMIN, CAJERO)
     users/               ← GET/POST/PATCH (ADMIN only)
@@ -89,6 +93,17 @@ src/app/
 5. `TicketPreview` renders the receipt (printable via `react-to-print`)
 
 `Sale` total = subtotal − per-item discounts − global discount. A sale can have multiple `SalePayment` rows (split payment across methods).
+
+### Affiliates (referral dentists)
+Dentists self-register at `/registro` (public) → AFILIADO account with `commissionPct = 0` (no earnings until ADMIN sets their % in `/afiliados`). At checkout the POS `PaymentModal` offers a "¿Viene de parte de un doctor?" selector; `POST /api/sales` freezes the % into `Sale.commissionAmount` and credits a `WalletTransaction` (type `COMISION`). Wallet balance = SUM of `WalletTransaction.amount` (COMISION positive, PAGO negative — payouts are registered manually by ADMIN via `POST /api/affiliates/[id]/payout`). The affiliate sees balance/referrals at `/monedero` (`GET /api/wallet`).
+
+**PostgREST gotcha:** `Sale` has two FKs to `User` (`userId`, `affiliateId`) — every embed must disambiguate: `user:User!Sale_userId_fkey(...)`, `affiliate:User!Sale_affiliateId_fkey(...)`.
+
+### Digital wallet passes (Passcreator)
+Each affiliate can add a pass to Apple/Google Wallet (button in `/monedero` → `POST /api/wallet/pass`). The pass shows name/balance/% and a QR carrying `User.walletToken` (generated lazily, unique). In-store redemption: `/canje` page (ADMIN, CAJERO) → scan QR → `GET /api/wallet/scan?token=` → `POST /api/wallet/redeem` (creates a negative `PAGO` tx). `src/lib/passcreator.ts` wraps the Passcreator REST **API v3** (`POST /api/v3/pass?async=false` to create, `PATCH /api/v3/pass/{id}` to update `storedValue` on balance changes — called best-effort from sales/payout/redeem; the v1 endpoints return `null`/HTML for this account, do not use them). Requires `PASSCREATOR_API_KEY` + `PASSCREATOR_TEMPLATE_ID`; the template defines dynamic fields `First Name`, `Last Name`, `ID` and uses `storedValue` for the balance. Without credentials the pass button hides and QR redemption still works (token is in the DB, not the pass).
+
+### Categories
+Product categories live in the `Category` table (`name` is the PK). `Product.category` is a FK with `ON UPDATE CASCADE` (renames propagate to products) and `ON DELETE RESTRICT` (deleting an in-use category returns 409). Managed from the "Categorías" modal in `/productos` (`CategoryManager`); `ProductForm` loads the select options from `/api/categories`.
 
 ### Design Tokens
 Custom colors are CSS variables defined in `src/app/globals.css` and exposed to Tailwind via `@theme inline`. Use these token names in classes:
