@@ -166,7 +166,7 @@ export function POSScreen() {
       {cart.length > 0 && (
         <button
           onClick={() => setCartOpen(true)}
-          className="md:hidden fixed bottom-20 right-4 z-30 bg-cta text-white rounded-2xl px-4 py-3 shadow-xl flex items-center gap-2 transition-all active:scale-95"
+          className="md:hidden fixed bottom-[calc(5rem+env(safe-area-inset-bottom))] right-4 z-30 bg-cta text-white rounded-2xl px-4 py-3 shadow-xl flex items-center gap-2 transition-all active:scale-95"
         >
           <ShoppingCart size={18} />
           <span className="font-bold">{formatCurrency(total)}</span>
@@ -184,7 +184,7 @@ export function POSScreen() {
             onClick={() => setCartOpen(false)}
           />
           <div
-            className="absolute bottom-0 left-0 right-0 rounded-t-2xl bg-bg-surface shadow-2xl flex flex-col overflow-hidden"
+            className="absolute bottom-0 left-0 right-0 rounded-t-2xl bg-bg-surface shadow-2xl flex flex-col overflow-hidden pb-[env(safe-area-inset-bottom)]"
             style={{ maxHeight: "90dvh" }}
           >
             {/* Drag handle + close */}

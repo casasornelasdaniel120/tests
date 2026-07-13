@@ -111,7 +111,7 @@ export function Sidebar({ role, userName }: SidebarProps) {
 
       {/* ── Mobile bottom nav (< lg) ── */}
       {/* overflow-x-auto: con muchos items (p. ej. ADMIN) la barra se desplaza en vez de encimarse */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-bg-surface border-t border-border flex items-center justify-start sm:justify-around gap-1 px-1 h-16 overflow-x-auto">
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-bg-surface border-t border-border flex items-center justify-start sm:justify-around gap-1 px-1 h-[calc(4rem+env(safe-area-inset-bottom))] pb-[env(safe-area-inset-bottom)] overflow-x-auto">
         {allowed.map((item) => {
           const active = pathname.startsWith(item.href);
           return (
