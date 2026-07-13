@@ -151,7 +151,7 @@ export function Cart({
             onChange={(e) => setDiscountInput(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && applyGlobalDiscount()}
             placeholder={discountType === "%" ? "Desc. %" : "Desc. $"}
-            className="flex-1 h-8 bg-bg-elevated border border-border rounded-xl px-3 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/20"
+            className="flex-1 w-full min-w-0 h-8 bg-bg-elevated border border-border rounded-xl px-3 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-gold/60 focus:ring-1 focus:ring-gold/20"
           />
           <button
             onClick={applyGlobalDiscount}

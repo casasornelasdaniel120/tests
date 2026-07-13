@@ -110,7 +110,8 @@ export function Sidebar({ role, userName }: SidebarProps) {
       </aside>
 
       {/* ── Mobile bottom nav (< lg) ── */}
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-bg-surface border-t border-border flex items-center justify-around px-1 h-16">
+      {/* overflow-x-auto: con muchos items (p. ej. ADMIN) la barra se desplaza en vez de encimarse */}
+      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-bg-surface border-t border-border flex items-center justify-start sm:justify-around gap-1 px-1 h-16 overflow-x-auto">
         {allowed.map((item) => {
           const active = pathname.startsWith(item.href);
           return (
@@ -118,18 +119,18 @@ export function Sidebar({ role, userName }: SidebarProps) {
               key={item.href}
               href={item.href}
               className={cn(
-                "flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-[10px] font-medium transition-all min-w-0",
+                "flex flex-col items-center gap-1 px-2 py-2 rounded-xl text-[10px] font-medium transition-all shrink-0 min-w-[56px] flex-1",
                 active ? "text-gold" : "text-text-secondary"
               )}
             >
               <item.icon size={20} strokeWidth={active ? 2.5 : 1.8} />
-              <span className="truncate">{item.label}</span>
+              <span className="truncate max-w-[72px]">{item.label}</span>
             </Link>
           );
         })}
         <button
           onClick={() => signOut({ callbackUrl: "/login" })}
-          className="flex flex-col items-center gap-1 px-3 py-2 rounded-xl text-[10px] font-medium text-text-secondary transition-all cursor-pointer"
+          className="flex flex-col items-center gap-1 px-2 py-2 rounded-xl text-[10px] font-medium text-text-secondary transition-all cursor-pointer shrink-0 min-w-[56px] flex-1"
         >
           <LogOut size={20} strokeWidth={1.8} />
           <span>Salir</span>

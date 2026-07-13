@@ -154,7 +154,7 @@ export function POSScreen() {
       </div>
 
       {/* Desktop + tablet cart panel (md+) */}
-      <div className="hidden md:flex md:w-64 lg:w-80 shrink-0">
+      <div className="hidden md:flex md:w-72 lg:w-80 shrink-0">
         <Cart
           {...cartProps}
           className="w-full border-l-0 md:border-l"
@@ -176,9 +176,9 @@ export function POSScreen() {
         </button>
       )}
 
-      {/* Mobile cart drawer (< md) */}
+      {/* Mobile cart drawer (< md) — z-[60] para tapar la barra de navegación inferior (z-50) */}
       {cartOpen && (
-        <div className="md:hidden fixed inset-0 z-40">
+        <div className="md:hidden fixed inset-0 z-[60]">
           <div
             className="absolute inset-0 bg-black/40 backdrop-blur-sm"
             onClick={() => setCartOpen(false)}

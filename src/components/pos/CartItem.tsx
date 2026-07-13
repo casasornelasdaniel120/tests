@@ -43,10 +43,15 @@ export function CartItem({ item, onUpdate, onRemove }: CartItemProps) {
   return (
     <div className="bg-bg-surface border border-border rounded-2xl p-3 flex flex-col gap-2 shadow-sm">
       {/* Name + delete */}
-      <div className="flex items-start justify-between gap-2">
-        <p className="text-sm font-medium text-text-primary leading-tight flex-1">
-          {item.name}
-        </p>
+      <div className="flex items-start justify-between gap-2 min-w-0">
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-medium text-text-primary leading-tight">
+            {item.name}
+          </p>
+          <p className="text-xs text-text-secondary mt-0.5">
+            {formatCurrency(item.unitPrice)} c/u
+          </p>
+        </div>
         <button
           onClick={onRemove}
           className="text-text-secondary hover:text-red-500 transition-colors shrink-0 cursor-pointer"
@@ -83,7 +88,7 @@ export function CartItem({ item, onUpdate, onRemove }: CartItemProps) {
       </div>
 
       {/* Discount row */}
-      <div className="flex gap-1.5 items-center">
+      <div className="flex gap-1.5 items-center min-w-0">
         <div className="flex rounded-lg overflow-hidden border border-border shrink-0">
           {(["$", "%"] as const).map((t) => (
             <button
@@ -104,14 +109,11 @@ export function CartItem({ item, onUpdate, onRemove }: CartItemProps) {
           type="number"
           min={0}
           max={discountType === "%" ? 100 : undefined}
-          placeholder={discountType === "%" ? "0%" : "0.00"}
+          placeholder={discountType === "%" ? "Desc. %" : "Desc. $"}
           value={discountInput}
           onChange={(e) => handleDiscountChange(e.target.value)}
-          className="flex-1 h-7 bg-bg-elevated border border-border rounded-lg px-2 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-gold/60"
+          className="flex-1 w-full min-w-0 h-7 bg-bg-elevated border border-border rounded-lg px-2 text-xs text-text-primary placeholder:text-text-secondary focus:outline-none focus:border-gold/60"
         />
-        <span className="text-xs text-text-secondary shrink-0">
-          {formatCurrency(item.unitPrice)}/u
-        </span>
       </div>
     </div>
   );
