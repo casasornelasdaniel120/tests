@@ -58,6 +58,8 @@ Three roles (defined in Prisma enum `Role`):
 
 `homeFor(role)` in `src/lib/roles.ts` is the canonical post-login/unauthorized-redirect target per role — use it in page guards instead of hardcoding paths.
 
+**`src/proxy.ts`** (Next 16's renamed middleware — do NOT create a `middleware.ts`) is the outermost gate: it whitelists `PUBLIC_PATHS` (login, registro), redirects anonymous users to `/login`, and enforces `ROLE_PATHS` per prefix. When adding a page route, register it there AND add the page-level guard; forgetting the proxy entry silently redirects anonymous visitors to `/login`.
+
 Role guards are applied at two levels:
 1. **Page level** — server components redirect unauthorized roles (e.g. `/pos/page.tsx` redirects EDITORs to `/clientes`)
 2. **API level** — every route handler checks `session.user.role`

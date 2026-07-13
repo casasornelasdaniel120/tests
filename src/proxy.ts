@@ -1,8 +1,9 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+import { homeFor } from "@/lib/roles";
 import type { Role } from "@prisma/client";
 
-const PUBLIC_PATHS = ["/login"];
+const PUBLIC_PATHS = ["/login", "/registro"];
 
 const ROLE_PATHS: Record<string, Role[]> = {
   "/usuarios": ["ADMIN"],
@@ -10,6 +11,9 @@ const ROLE_PATHS: Record<string, Role[]> = {
   "/productos": ["ADMIN", "EDITOR"],
   "/clientes": ["ADMIN", "EDITOR"],
   "/pos": ["ADMIN", "CAJERO"],
+  "/afiliados": ["ADMIN"],
+  "/canje": ["ADMIN", "CAJERO"],
+  "/monedero": ["AFILIADO"],
 };
 
 export default auth((req) => {
@@ -27,7 +31,8 @@ export default auth((req) => {
 
   for (const [path, allowed] of Object.entries(ROLE_PATHS)) {
     if (pathname.startsWith(path) && !allowed.includes(role)) {
-      return NextResponse.redirect(new URL("/pos", req.url));
+      // homeFor evita bucles: cada rol cae en una página que sí puede ver
+      return NextResponse.redirect(new URL(homeFor(role), req.url));
     }
   }
 
