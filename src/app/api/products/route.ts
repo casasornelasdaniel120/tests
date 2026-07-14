@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createId } from "@paralleldrive/cuid2";
 import { auth } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
@@ -29,7 +30,13 @@ export async function POST(req: Request) {
 
   const body = await req.json();
   const supabase = getSupabaseAdmin();
-  const { data, error } = await supabase.from("Product").insert(body).select().single();
+  // id/updatedAt los genera Prisma en cliente (@default(cuid()), @updatedAt);
+  // al insertar vía Supabase hay que proveerlos manualmente
+  const { data, error } = await supabase
+    .from("Product")
+    .insert({ ...body, id: createId(), updatedAt: new Date().toISOString() })
+    .select()
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
 }

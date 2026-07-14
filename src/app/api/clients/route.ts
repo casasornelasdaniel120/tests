@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { createId } from "@paralleldrive/cuid2";
 import { auth } from "@/lib/auth";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
 
@@ -23,7 +24,11 @@ export async function POST(req: Request) {
   if (!session) return NextResponse.json({ error: "No autorizado" }, { status: 401 });
 
   const body = await req.json();
-  const { data, error } = await getSupabaseAdmin().from("Client").insert(body).select().single();
+  const { data, error } = await getSupabaseAdmin()
+    .from("Client")
+    .insert({ ...body, id: createId(), updatedAt: new Date().toISOString() })
+    .select()
+    .single();
   if (error) return NextResponse.json({ error: error.message }, { status: 500 });
   return NextResponse.json(data, { status: 201 });
 }
