@@ -29,19 +29,25 @@ export function CategoryManager({ onChanged }: CategoryManagerProps) {
   async function request(url: string, init: RequestInit): Promise<boolean> {
     setError("");
     setLoading(true);
-    const res = await fetch(url, {
-      headers: { "Content-Type": "application/json" },
-      ...init,
-    });
-    setLoading(false);
-    if (!res.ok) {
-      const data = await res.json().catch(() => ({ error: "Error" }));
-      setError((data as { error?: string }).error ?? "Error");
+    try {
+      const res = await fetch(url, {
+        headers: { "Content-Type": "application/json" },
+        ...init,
+      });
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({ error: "Error" }));
+        setError((data as { error?: string }).error ?? "Error");
+        return false;
+      }
+      load();
+      onChanged();
+      return true;
+    } catch {
+      setError("Error de conexión. Intenta de nuevo.");
       return false;
+    } finally {
+      setLoading(false);
     }
-    load();
-    onChanged();
-    return true;
   }
 
   async function handleAdd(e: React.FormEvent) {
