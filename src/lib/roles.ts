@@ -1,4 +1,4 @@
-import type { Role } from "@prisma/client";
+import type { Role } from "@/types";
 
 // Página de inicio según el rol; usada por guards y por el login
 export function homeFor(role?: Role): string {

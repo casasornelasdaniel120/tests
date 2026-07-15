@@ -1,7 +1,7 @@
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
 import { homeFor } from "@/lib/roles";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/types";
 
 const PUBLIC_PATHS = ["/login", "/registro"];
 

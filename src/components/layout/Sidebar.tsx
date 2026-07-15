@@ -17,7 +17,7 @@ import {
   QrCode,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/types";
 
 interface NavItem {
   href: string;

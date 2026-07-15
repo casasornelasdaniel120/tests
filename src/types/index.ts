@@ -1,6 +1,8 @@
-import type { Role, PaymentMethod } from "@prisma/client";
-
-export type { Role, PaymentMethod };
+// Enums de la base de datos — deben coincidir con los tipos creados en
+// supabase/migrations (Role, PaymentMethod, WalletTxType)
+export type Role = "ADMIN" | "CAJERO" | "EDITOR" | "AFILIADO";
+export type PaymentMethod = "EFECTIVO" | "TARJETA" | "TRANSFERENCIA";
+export type WalletTxType = "COMISION" | "PAGO" | "AJUSTE";
 
 export interface CartItem {
   productId: string;

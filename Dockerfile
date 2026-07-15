@@ -11,10 +11,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY . .
 ENV NEXT_TELEMETRY_DISABLED=1
-# prisma.config.ts exige estas vars al evaluar la config; prisma generate no
-# se conecta a la base, así que un valor dummy es suficiente para el build.
-ENV DATABASE_URL="postgresql://build:build@localhost:5432/build" \
-    DIRECT_URL="postgresql://build:build@localhost:5432/build"
 RUN npm run build
 
 # ── Etapa 3: runtime ─────────────────────────────────────────────

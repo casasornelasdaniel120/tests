@@ -8,13 +8,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ```bash
 npm run dev          # Start dev server (Turbopack)
-npm run build        # prisma generate + next build
+npm run build        # next build
 npm run lint         # ESLint
 
-npm run db:generate  # Regenerate Prisma client after schema changes
-npm run db:migrate   # Apply schema migrations (dev)
-npm run db:seed      # Seed database with demo data
-npm run db:studio    # Open Prisma Studio GUI
+npm run db:new       # Create a new empty migration in supabase/migrations
+npm run db:migrate   # Apply pending migrations to the LOCAL database (supabase migration up)
+npm run db:push      # Apply pending migrations to the LINKED CLOUD project (supabase db push)
+npm run db:seed      # Seed database with demo data (supabase/seed.ts, uses .env)
 
 npm run supabase:start   # Local Supabase stack in Docker (API :54321, DB :54322, Studio :54323)
 npm run supabase:stop    # Stop the local Supabase stack
@@ -23,7 +23,9 @@ npm run docker:down      # Stop the app container
 ```
 
 ### Local development
-The full stack runs locally: `supabase start` brings up Postgres/API/Storage in Docker (bucket `productos` is declared in `supabase/config.toml`), then `prisma migrate deploy` + `db:seed` populate it. `.env` targets the local stack from the host; `.env.docker` is used by the app container (reaches Supabase via `host.docker.internal`, while `NEXT_PUBLIC_SUPABASE_URL` stays `http://localhost:54321` for browser-facing URLs — `toPublicUrl()` in `src/lib/supabase-admin.ts` rewrites storage URLs). The Prisma migration `20260713000000_grant_supabase_data_api` grants `service_role` access to Prisma-created tables (the Supabase CLI no longer auto-exposes them).
+The full stack runs locally: `supabase start` brings up Postgres/API/Storage in Docker (bucket `productos` is declared in `supabase/config.toml` AND created idempotently by migration `20260714000000_storage_bucket_productos`), then `db:migrate` + `db:seed` populate it. `.env` targets the local stack from the host; `.env.docker` is used by the app container (reaches Supabase via `host.docker.internal`, while `NEXT_PUBLIC_SUPABASE_URL` stays `http://localhost:54321` for browser-facing URLs — `toPublicUrl()` in `src/lib/supabase-admin.ts` rewrites storage URLs). Migration `20260713000000_grant_supabase_data_api` grants `service_role` access to tables created by `postgres` (the Supabase Data API no longer auto-exposes them).
+
+**IMPORTANT — the app container (`localhost:3000`) is a production build**: it does NOT pick up code changes until rebuilt with `npm run docker:up`.
 
 No test suite is configured. Playwright is installed as a dev dependency but has no test files yet.
 
@@ -32,22 +34,26 @@ No test suite is configured. Playwright is installed as a dev dependency but has
 ### Stack
 - **Next.js 16** (App Router) — see `node_modules/next/dist/docs/` for API specifics; this version has breaking changes from prior releases
 - **NextAuth v5 beta** (`next-auth@^5.0.0-beta.31`) — JWT sessions; credentials are verified against **Supabase Auth** (`signInWithPassword`)
-- **Prisma 6** — schema definition and migrations only; **not used for runtime queries**
+- **Supabase CLI migrations** — plain SQL files in `supabase/migrations/`; the CLI owns schema and migration history (no ORM)
 - **Supabase JS client** — all runtime database reads/writes go through `getSupabaseAdmin()` using the service role key
 - **Tailwind CSS v4** — configured via PostCSS; custom design tokens in `globals.css`
 - **Zustand** — available but not yet wired to any store
 
-### Dual Prisma / Supabase Pattern
-Prisma owns the schema (`prisma/schema.prisma`) and migration history. At runtime every API route discards Prisma and calls Supabase directly via the service role client from `src/lib/supabase-admin.ts`. The `src/lib/prisma.ts` singleton exists but is not called from any API route — it's only used in `prisma/seed.ts`.
+### Schema & Migrations (Supabase CLI)
+The schema lives entirely in `supabase/migrations/*.sql` (hand-written SQL; Prisma was removed). Migration history is tracked by the Supabase CLI in `supabase_migrations.schema_migrations`. The project is linked to cloud project `jmotdsmqgjogezfdixst` ("pos").
 
-When adding new queries: use `getSupabaseAdmin()`, not `prisma`. When changing the schema: edit `schema.prisma` and run `db:migrate`, then `db:generate`.
+Workflow for schema changes: `npm run db:new <name>` → write SQL in the generated file → `npm run db:migrate` (applies to local) → `npm run db:push` (applies to cloud). Inserts from API routes must generate `id` (`createId()` from `@paralleldrive/cuid2`) and set `updatedAt` manually — the DB has no defaults for them (legacy of the Prisma-owned schema).
+
+DB enum types (`Role`, `PaymentMethod`, `WalletTxType`) are mirrored as TypeScript unions in `src/types/index.ts` — keep them in sync when a migration alters an enum.
+
+At runtime every API route calls Supabase via the service role client from `src/lib/supabase-admin.ts`. When adding new queries: use `getSupabaseAdmin()`.
 
 ### Auth & Role Guard
 `src/lib/auth.ts` exports `{ handlers, signIn, signOut, auth }` from NextAuth. The `auth()` function is the primary way to get the session in Server Components and Route Handlers.
 
 Credentials live in **Supabase Auth** (`auth.users`): `authorize()` calls `supabase.auth.signInWithPassword`, then loads the profile/role from the `User` table by email. Users that exist only in Supabase Auth (e.g. created in Studio) are auto-provisioned into `User` on first login (role from `user_metadata.role`, default CAJERO). The users API (`/api/users`) creates/updates/deletes in Supabase Auth via `auth.admin.*`; `User.password` is legacy and nullable.
 
-Three roles (defined in Prisma enum `Role`):
+Four roles (Postgres enum `Role`, mirrored in `src/types/index.ts`):
 
 | Role | Access |
 |------|--------|
@@ -124,8 +130,6 @@ Custom colors are CSS variables defined in `src/app/globals.css` and exposed to 
 
 | Variable | Purpose |
 |----------|---------|
-| `DATABASE_URL` | Prisma migrations (direct Postgres) |
-| `DIRECT_URL` | Prisma direct connection |
 | `NEXT_PUBLIC_SUPABASE_URL` | Supabase project URL |
 | `SUPABASE_SERVICE_ROLE_KEY` | Service-role key for server-side Supabase client |
 | `NEXTAUTH_SECRET` | JWT signing secret |

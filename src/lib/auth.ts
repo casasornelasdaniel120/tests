@@ -1,7 +1,7 @@
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { getSupabaseAdmin } from "@/lib/supabase-admin";
-import type { Role } from "@prisma/client";
+import type { Role } from "@/types";
 
 const ROLES: Role[] = ["ADMIN", "CAJERO", "EDITOR"];
 
