@@ -12,6 +12,7 @@ const ROLE_PATHS: Record<string, Role[]> = {
   "/clientes": ["ADMIN", "EDITOR"],
   "/pos": ["ADMIN", "CAJERO"],
   "/afiliados": ["ADMIN"],
+  "/finanzas": ["ADMIN"],
   "/canje": ["ADMIN", "CAJERO"],
   "/monedero": ["AFILIADO"],
 };

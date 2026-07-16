@@ -1,6 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { createId } from "@paralleldrive/cuid2";
-import type { Role, PaymentMethod } from "../src/types";
+import type { Role, PaymentMethod, InsumoType } from "../src/types";
 
 // Corre con: npm run db:seed (tsx --env-file=.env supabase/seed.ts)
 // Para sembrar la nube: apunta las vars de entorno al proyecto remoto.
@@ -77,6 +77,77 @@ const CLIENTS = [
   { id: "cli_4", name: "Valentina Torres", phone: "5558765432", email: "valen.torres@hotmail.com", notes: "Quinceañera programada para diciembre" },
   { id: "cli_5", name: "Roberto Sánchez", phone: "5552345678", email: "r.sanchez@corporativo.mx", notes: null },
 ];
+
+// Insumos demo: materiales inventariados (costo = promedio ponderado de
+// compras) y mano de obra (tarifa manual, sin stock)
+const INSUMOS: { id: string; name: string; type: InsumoType; unit: string; currentCost: number; stock: number; minStock: number }[] = [
+  { id: "ins_placa", name: "Placa radiográfica", type: "MATERIAL", unit: "pieza", currentCost: 45, stock: 20, minStock: 10 },
+  { id: "ins_guantes", name: "Guantes de látex", type: "MATERIAL", unit: "pieza", currentCost: 3, stock: 100, minStock: 30 },
+  { id: "ins_papel", name: "Papel fotográfico", type: "MATERIAL", unit: "hoja", currentCost: 12, stock: 50, minStock: 20 },
+  { id: "ins_album", name: "Álbum impreso", type: "MATERIAL", unit: "pieza", currentCost: 350, stock: 8, minStock: 3 },
+  { id: "ins_hora_dr", name: "Hora de doctor", type: "MANO_DE_OBRA", unit: "hora", currentCost: 300, stock: 0, minStock: 0 },
+  { id: "ins_hora_asist", name: "Hora de asistente", type: "MANO_DE_OBRA", unit: "hora", currentCost: 80, stock: 0, minStock: 0 },
+];
+
+// Recetas (BOM): insumos que consume cada producto vendido
+const RECIPES: { productId: string; insumoId: string; quantity: number }[] = [
+  { productId: "prod_retrato_basico", insumoId: "ins_placa", quantity: 1 },
+  { productId: "prod_retrato_basico", insumoId: "ins_guantes", quantity: 3 },
+  { productId: "prod_retrato_basico", insumoId: "ins_hora_dr", quantity: 0.5 },
+  { productId: "prod_retrato_basico", insumoId: "ins_hora_asist", quantity: 1 },
+  { productId: "prod_retrato_premium", insumoId: "ins_placa", quantity: 2 },
+  { productId: "prod_retrato_premium", insumoId: "ins_papel", quantity: 15 },
+  { productId: "prod_retrato_premium", insumoId: "ins_album", quantity: 1 },
+  { productId: "prod_retrato_premium", insumoId: "ins_hora_dr", quantity: 1 },
+  { productId: "prod_retrato_premium", insumoId: "ins_hora_asist", quantity: 1.5 },
+];
+
+async function seedFinance(userIdByEmail: Record<string, string>) {
+  const now = new Date().toISOString();
+  const { error: insError } = await supabase.from("Insumo").upsert(
+    INSUMOS.map((i) => ({ ...i, active: true, updatedAt: now })),
+    { onConflict: "id", ignoreDuplicates: true }
+  );
+  if (insError) throw insError;
+  console.log("✓ Insumos creados");
+
+  const { error: recError } = await supabase.from("ProductInsumo").upsert(
+    RECIPES.map((r) => ({ id: `rec_${r.productId}_${r.insumoId}`, ...r })),
+    { onConflict: "id", ignoreDuplicates: true }
+  );
+  if (recError) throw recError;
+  console.log("✓ Recetas creadas");
+
+  // Compra demo que respalda el stock/costo inicial de los materiales
+  const { count } = await supabase.from("Purchase").select("id", { count: "exact", head: true });
+  if ((count ?? 0) > 0) {
+    console.log("↷ Compras omitidas (ya existen)");
+    return;
+  }
+  const purchaseId = createId();
+  const materials = INSUMOS.filter((i) => i.type === "MATERIAL");
+  const total = materials.reduce((sum, i) => sum + i.stock * i.currentCost, 0);
+  const { error: purError } = await supabase.from("Purchase").insert({
+    id: purchaseId,
+    userId: userIdByEmail["admin@fotostudio.mx"],
+    supplier: "Proveedora Dental del Centro",
+    notes: "Compra inicial de inventario",
+    total,
+  });
+  if (purError) throw purError;
+  const { error: purItemsError } = await supabase.from("PurchaseItem").insert(
+    materials.map((i) => ({
+      id: createId(),
+      purchaseId,
+      insumoId: i.id,
+      quantity: i.stock,
+      unitCost: i.currentCost,
+      subtotal: i.stock * i.currentCost,
+    }))
+  );
+  if (purItemsError) throw purItemsError;
+  console.log("✓ Compra inicial creada");
+}
 
 async function main() {
   const userIdByEmail = await seedUsers();
@@ -164,6 +235,8 @@ async function main() {
     }
     console.log("✓ Ventas creadas");
   }
+
+  await seedFinance(userIdByEmail);
 
   console.log("\n✅ Seed completado");
   console.log("\nCredenciales de acceso:");

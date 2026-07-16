@@ -13,7 +13,7 @@ export async function GET(_req: Request, { params }: { params: Promise<{ id: str
     supabase.from("Client").select("*").eq("id", id).single(),
     supabase
       .from("Sale")
-      .select(`id, createdAt, total, discount, subtotal, notes, user:User!Sale_userId_fkey(id,name), items:SaleItem(*,product:Product(id,name,image)), payments:SalePayment(*)`)
+      .select(`id, createdAt, total, discount, subtotal, notes, user:User!Sale_userId_fkey(id,name), items:SaleItem(id,quantity,unitPrice,discount,subtotal,product:Product(id,name,image)), payments:SalePayment(*)`)
       .eq("clientId", id)
       .order("createdAt", { ascending: false }),
   ]);
