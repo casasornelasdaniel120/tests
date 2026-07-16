@@ -107,7 +107,7 @@ export function RecipeEditor({ productId, productName, onClose, onSaved }: Recip
                     next[idx] = { ...next[idx], insumoId: e.target.value };
                     setRows(next);
                   }}
-                  className="flex-1 h-10 bg-bg-elevated border border-border rounded-lg px-3 text-sm text-text-primary focus:outline-none focus:border-gold/60"
+                  className="flex-1 min-w-0 h-10 bg-bg-elevated border border-border rounded-lg px-3 text-sm text-text-primary focus:outline-none focus:border-gold/60"
                 >
                   <option value="">Selecciona insumo…</option>
                   {insumos
@@ -129,10 +129,10 @@ export function RecipeEditor({ productId, productName, onClose, onSaved }: Recip
                     next[idx] = { ...next[idx], quantity: e.target.value };
                     setRows(next);
                   }}
-                  className="w-24 h-10 bg-bg-elevated border border-border rounded-lg px-3 text-sm text-text-primary text-right focus:outline-none focus:border-gold/60"
+                  className="w-16 sm:w-20 h-10 bg-bg-elevated border border-border rounded-lg px-2 sm:px-3 text-sm text-text-primary text-right focus:outline-none focus:border-gold/60 shrink-0"
                   placeholder="Cant."
                 />
-                <span className="w-24 text-right text-sm text-text-secondary shrink-0">
+                <span className="w-16 sm:w-20 text-right text-sm text-text-secondary shrink-0 truncate">
                   {insumo ? formatCurrency(costFor(row)) : "—"}
                 </span>
                 <button
